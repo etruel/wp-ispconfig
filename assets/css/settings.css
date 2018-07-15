@@ -1,0 +1,19 @@
+#test-connection-div {
+	display: inline-block;
+}
+#test-connection-div .spinner {
+	float: none !important;
+}
+#test-connection-message {
+	display: inline-block; 
+	margin-top: 5px; 
+	line-height: 20px; 
+	font-size: 14px; 
+	font-weight: bold;
+}
+#test-connection-message.error {
+	color:red;
+}
+#test-connection-message.success {
+	color:green;
+}
