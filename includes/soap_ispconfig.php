@@ -161,7 +161,7 @@ class SoapIspconfig {
         );
         $new_options = wp_parse_args($options, $default_options);
         extract($new_options);
-        return $this->soap->dns_templatezone_add($this->session_id, $client_id, $template_id, $domain, $ip, $ns1, $ns2, $dnsemail);
+        return $this->soap->dns_templatezone_add($this->session_id, $client_id, $template_id, $domain, $ip, $ns1, $ns2, $dns_email);
     }
 
     public function add_website( $client_id = 0, $options = array() ){
@@ -276,7 +276,7 @@ class SoapIspconfig {
             'name' => '',
             'uid' => 5000,
             'gid' => 5000,
-            'maildir' => '/var/vmail/'. time(tre) . '-'. rand(1, 1234) .'/'. time(tre) . '-'. rand(1, 1234),
+            'maildir' => '/var/vmail/'. time(true) . '-'. rand(1, 1234) .'/'. time(true) . '-'. rand(1, 1234),
             'quota' => 524288000,
             'cc' => '',
             'homedir' => '/var/vmail',
@@ -298,6 +298,72 @@ class SoapIspconfig {
        return $this->soap->mail_user_add($this->session_id, $client_id, $new_options);
 
     }
-   
+
+    public function client_get_all() {
+         return $this->soap->client_get_all($this->session_id);
+    }
+    public function client_get($client_id) {
+        return $this->soap->client_get($this->session_id, $client_id);
+    }
+
+
+    public function client_get_groupid($primary_id) {
+        return $this->soap->client_get_groupid($this->session_id, $primary_id);        
+    }
+
+    public function sites_web_domain_get($primary_id) {
+        return $this->soap->sites_web_domain_get($this->session_id, $primary_id);        
+    }
+        
+    public function sites_web_aliasdomain_add($client_id, $options = array()) {
+        $default_options = array(
+            'server_id' => '1',
+            'ip_address' => '*',
+            'domain' => '',
+            'type' => 'alias',
+            'parent_domain_id' => '',
+            'vhost_type' => '',
+            'document_root' => NULL,
+            'system_user' => NULL,
+            'system_group' => NULL,
+            'hd_quota' => 0,
+            'traffic_quota' => -1,
+            'cgi' => 'n',
+            'ssi' => 'n',
+            'suexec' => 'n',
+            'errordocs' => 1,
+            'is_subdomainwww' => 1,
+            'subdomain' => '',
+            'php' => 'mod',
+            'ruby' => 'n',
+            'redirect_type' => '',
+            'redirect_path' => '',
+            'ssl' => 'n',
+            'ssl_state' => '',
+            'ssl_locality' => '',
+            'ssl_organisation' => '',
+            'ssl_organisation_unit' => '',
+            'ssl_country' => '',
+            'ssl_domain' => '',
+            'ssl_request' => '',
+            'ssl_cert' => '',
+            'ssl_bundle' => '',
+            'ssl_action' => '',
+            'stats_password' => '',
+            'stats_type' => 'webalizer',
+            'allow_override' => 'All',
+            'apache_directives' => '',
+            'php_open_basedir' => '/',
+            'custom_php_ini' => '',
+            'backup_interval' => '',
+            'backup_copies' => 1,
+            'active' => 'y',
+            'traffic_quota_lock' => 'n'
+        );
+         
+       $new_options = wp_parse_args($options, $default_options);        
+       return $this->soap->sites_web_aliasdomain_add($this->session_id, $client_id, $new_options);
+    }
+
 }
 ?>

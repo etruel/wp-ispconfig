@@ -32,10 +32,20 @@ class WPISPConfig_all_in_one {
     		'wpispconfig_allinone',
     		array(__CLASS__, 'page')
     	);
+
+    	add_action( 'admin_print_styles-' . $page, array(__CLASS__, 'add_styles') );
+		add_action( 'admin_print_scripts-' . $page, array(__CLASS__, 'add_scripts') );
+	}
+
+	public static function add_styles() {
+		do_action('wpispconfig_all_in_one_add_styles');
+	}
+	public static function add_scripts() {
+		do_action('wpispconfig_all_in_one_add_scripts');
 	}
 
 	public static function page() {
-		 if(!current_user_can('manage_options')) {
+		if(!current_user_can('manage_options')) {
             wp_die(__('You do not have sufficient permissions to access this page.'));
         }
        	
@@ -63,7 +73,7 @@ class WPISPConfig_all_in_one {
 								<p></p>
 								
 								<?php
-
+									$soap = null;
 									try {
 										$soap = new SoapIspconfig($options);
 										//print_r($soap->server_get_all());
@@ -72,8 +82,53 @@ class WPISPConfig_all_in_one {
 									} catch (Exception $e) {
 										echo '<div class="notice notice-error">' .$e->getMessage() . '</div>';
 									}
+
+									do_action('wpispconfig_all_in_one_before_table', $soap);
 								?>
 
+								<table class="form-table" id="client_table">
+									<tr>
+										<th scope="row">
+											<label for="client_name"><?php _e( 'Client Name:', 'wpispconfig' ); ?></label>
+										</th>
+										<td>
+											<input class="regular-text" type="text" id="client_name" name="client_name" value="">
+										</td>
+									</tr>
+
+									<tr>
+										<th scope="row">
+											<label for="company_name"><?php _e( 'Company Name:', 'wpispconfig' ); ?></label>
+										</th>
+										<td>
+											<input class="regular-text" type="text" id="company_name" name="company_name" value="">
+										</td>
+									</tr>
+									<tr>
+										<th scope="row">
+											<label for="email"><?php _e( 'Email:', 'wpispconfig' ); ?></label>
+										</th>
+										<td>
+											<input class="regular-text" type="text" id="email" name="email" value="">
+										</td>
+									</tr>
+									<tr>
+										<th scope="row">
+											<label for="username"><?php _e( 'Client Username:', 'wpispconfig' ); ?></label>
+										</th>
+										<td>
+											<input class="regular-text" type="text" id="username" name="username" value="">
+										</td>
+									</tr>
+									<tr>
+										<th scope="row">
+											<label for="password"><?php _e( 'Client Password:', 'wpispconfig' ); ?></label>
+										</th>
+										<td>
+											<input class="regular-text" type="text" id="password" name="password" value="<?php echo wp_generate_password(12, false, false); ?>">
+										</td>
+									</tr>
+								</table>
 								<table class="form-table">
 									<tr>
 										<th scope="row">
@@ -117,47 +172,7 @@ class WPISPConfig_all_in_one {
 											<input class="regular-text" type="text" id="new_domain" name="new_domain" value="">
 										</td>
 									</tr>
-									<tr>
-										<th scope="row">
-											<label for="client_name"><?php _e( 'Client Name:', 'wpispconfig' ); ?></label>
-										</th>
-										<td>
-											<input class="regular-text" type="text" id="client_name" name="client_name" value="">
-										</td>
-									</tr>
-
-									<tr>
-										<th scope="row">
-											<label for="company_name"><?php _e( 'Company Name:', 'wpispconfig' ); ?></label>
-										</th>
-										<td>
-											<input class="regular-text" type="text" id="company_name" name="company_name" value="">
-										</td>
-									</tr>
-									<tr>
-										<th scope="row">
-											<label for="email"><?php _e( 'Email:', 'wpispconfig' ); ?></label>
-										</th>
-										<td>
-											<input class="regular-text" type="text" id="email" name="email" value="">
-										</td>
-									</tr>
-									<tr>
-										<th scope="row">
-											<label for="username"><?php _e( 'Client Username:', 'wpispconfig' ); ?></label>
-										</th>
-										<td>
-											<input class="regular-text" type="text" id="username" name="username" value="">
-										</td>
-									</tr>
-									<tr>
-										<th scope="row">
-											<label for="password"><?php _e( 'Client Password:', 'wpispconfig' ); ?></label>
-										</th>
-										<td>
-											<input class="regular-text" type="text" id="password" name="password" value="<?php echo wp_generate_password(12, false, false); ?>">
-										</td>
-									</tr>
+									
 									<tr>
 										<th scope="row">
 											<label for="client_ip"><?php _e( 'Client IP:', 'wpispconfig' ); ?></label>
@@ -203,97 +218,106 @@ class WPISPConfig_all_in_one {
 	public static function create($array_values = array()) {
 		$options = WPISPConfig_Settings::get_option();
 
-		$server_id = (!empty($array_values['server']) ? $array_values['server'] : '1');
-		$client_name = (!empty($array_values['client_name']) ? $array_values['client_name'] : '');
-		$company_name = (!empty($array_values['company_name']) ? $array_values['company_name'] : '');
-		$email =  (!empty($array_values['email']) ? $array_values['email'] : '');
-		$username = (!empty($array_values['username']) ? $array_values['username'] : '');
-		$password = (!empty($array_values['password']) ? $array_values['password'] : '');
 
-		$template_id = (!empty($array_values['dns_template_id']) ? $array_values['dns_template_id'] : '');
-		$new_domain = (!empty($array_values['new_domain']) ? $array_values['new_domain'] : '');
-		$client_ip  = (!empty($array_values['client_ip']) ? $array_values['client_ip'] : '');
-		$client_ip  = (!empty($array_values['client_ip']) ? $array_values['client_ip'] : '');
-		$ns1 = (!empty($array_values['ns1']) ? $array_values['ns1'] : '');
-		$ns2 = (!empty($array_values['ns2']) ? $array_values['ns2'] : '');
-		$dns_email = str_replace('@', '.', $email);
+		$values = array();
 
+		$values['server_id'] = (!empty($array_values['server']) ? $array_values['server'] : '1');
+		$values['client_name'] = (!empty($array_values['client_name']) ? $array_values['client_name'] : '');
+		$values['company_name'] = (!empty($array_values['company_name']) ? $array_values['company_name'] : '');
+		$values['email'] =  (!empty($array_values['email']) ? $array_values['email'] : '');
+		$values['username'] = (!empty($array_values['username']) ? $array_values['username'] : '');
+		$values['password'] = (!empty($array_values['password']) ? $array_values['password'] : '');
+
+		$values['template_id'] = (!empty($array_values['dns_template_id']) ? $array_values['dns_template_id'] : '');
+		$values['new_domain'] = (!empty($array_values['new_domain']) ? $array_values['new_domain'] : '');
+		$values['client_ip']  = (!empty($array_values['client_ip']) ? $array_values['client_ip'] : '');
+		$values['ns1'] = (!empty($array_values['ns1']) ? $array_values['ns1'] : '');
+		$values['ns2'] = (!empty($array_values['ns2']) ? $array_values['ns2'] : '');
+		$values['dns_email'] = str_replace('@', '.', $values['email']);
+
+		
 
 		try {
 
 			$soap = new SoapIspconfig($options);
-			$new_client =  array(
-								'company_name' 	=> $company_name,
-								'contact_name' 	=> $client_name,
-								'email' 		=> $email,
-								'username' 		=> $username,
-								'password' 		=> $password,
+			$values = apply_filters('wpispconfig_values_all_in_one_before_create', $values, $array_values, $soap);	
+
+			if (empty($values['client_id'])) {
+
+				$new_client =  array(
+								'company_name' 	=> $values['company_name'],
+								'contact_name' 	=> $values['client_name'],
+								'email' 		=> $values['email'],
+								'username' 		=> $values['username'],
+								'password' 		=> $values['password'],
 
 							);
 
-			$client_id = $soap->add_client( $new_client);
+				$values['client_id'] = $soap->add_client( $new_client);
+			}
+			
 
 			$new_dns_templatezone = array(
-					            'client_id' 	=> $client_id,
-					            'template_id' 	=> $template_id,
-					            'domain' 		=> $new_domain,
-					            'ip' 			=> $client_ip,
-					            'ns1' 			=> $ns1,
-					            'ns2' 			=> $ns2,
-					            'dns_email' 	=> $dns_email,
+					            'client_id' 	=> $values['client_id'],
+					            'template_id' 	=> $values['template_id'],
+					            'domain' 		=> $values['new_domain'],
+					            'ip' 			=> $values['client_ip'],
+					            'ns1' 			=> $values['ns1'],
+					            'ns2' 			=> $values['ns2'],
+					            'dns_email' 	=> $values['dns_email'],
 					        );
 	        $dns_zone = $soap->dns_templatezone_add( $new_dns_templatezone );
 
 	        $new_website = array(
-	        					'server_id'		 => $server_id,
-					            'domain' 		 => $new_domain,
-					            'stats_password' => $password,
+	        					'server_id'		 => $values['server_id'],
+					            'domain' 		 => $values['new_domain'],
+					            'stats_password' => $values['password'],
 					        );
 
-	        $domain_id = $soap->add_website($client_id, $new_website );
+	        $domain_id = $soap->add_website($values['client_id'], $new_website );
 
-	        $ftp_dir = '/var/www/clients/client'. $client_id .'/web' . $domain_id;
+	        $ftp_dir = '/var/www/clients/client'. $values['client_id'] .'/web' . $domain_id;
 	        $new_ftp = array(
-	        					'server_id'		=> $server_id,
-					            'username' 		=> $username,
-					            'password' 		=> $password,
+	        					'server_id'		=> $values['server_id'],
+					            'username' 		=> $values['username'],
+					            'password' 		=> $values['password'],
 					            'dir'           => $ftp_dir,
 					        );
 
-	        $ftp_user_id = $soap->sites_ftp_user_add($client_id, $domain_id, $new_ftp );
+	        $ftp_user_id = $soap->sites_ftp_user_add($values['client_id'], $domain_id, $new_ftp );
 
 	        $new_database = array(
-	        					'server_id'				=> $server_id,
-					            'database_user' 		=> $username,
-					            'database_password' 	=> $password,
+	        					'server_id'				=> $values['server_id'],
+					            'database_user' 		=> $values['username'],
+					            'database_password' 	=> $values['password'],
 					        );
 
-	        $database_user_id = $soap->sites_database_user_add($client_id, $new_database );
+	        $database_user_id = $soap->sites_database_user_add($values['client_id'], $new_database );
 
-	        $soap->mail_domain_add($client_id, array( 'domain' => $new_domain) );
+	        $soap->mail_domain_add($values['client_id'], array( 'domain' => $values['new_domain']) );
 	        
-	        $new_email_address = $username . '@' . $new_domain;
+	        $new_email_address = $values['username'] . '@' . $values['new_domain'];
 	        $new_email_options = array(
-	        					'server_id'		=> $server_id,
+	        					'server_id'		=> $values['server_id'],
 					            'email' 		=> $new_email_address,
 					            'login' 		=> $new_email_address,
-					            'password' 		=> $password,
-					            'name' 			=> $client_name,
-					            'maildir'		=>  '/var/vmail/'.$new_domain.'/'.$username,
+					            'password' 		=> $values['password'],
+					            'name' 			=> $values['client_name'],
+					            'maildir'		=>  '/var/vmail/'. $values['new_domain'] .'/'.$values['username'],
 					        );
-	       $email_id = $soap->mail_user_add($client_id, $new_email_options);
+	       $email_id = $soap->mail_user_add($values['client_id'], $new_email_options);
 	        
 	        return array(
-	        	'server_id'			=> $server_id,
-	        	'client_id' 		=> $client_id, 
-	        	'company_name' 		=> $company_name, 
-	        	'contact_name' 		=> $contact_name, 
-	        	'email' 			=> $email, 
-	        	'username' 			=> $username, 
-	        	'password' 			=> $password,
-	        	'template_id'		=> $template_id,
+	        	'server_id'			=> $values['server_id'],
+	        	'client_id' 		=> $values['client_id'], 
+	        	'company_name' 		=> $values['company_name'], 
+	        	'contact_name' 		=> $values['client_name'], 
+	        	'email' 			=> $values['email'], 
+	        	'username' 			=> $values['username'], 
+	        	'password' 			=> $values['password'],
+	        	'template_id'		=> $values['template_id'],
 	        	'domain_id'			=> $domain_id,
-	        	'domain'			=> $new_domain,
+	        	'domain'			=> $values['new_domain'],
 	        	'ftp_user_id'		=> $ftp_user_id,
 	        	'ftp_dir'			=> $ftp_dir,
 	        	'database_user_id'	=> $database_user_id,
@@ -318,36 +342,42 @@ class WPISPConfig_all_in_one {
 
 			$created_values = self::create($_POST);
 
-			$notice_success = '<strong>' . __( 'Client ID:', 'wpispconfig' ) .'</strong> ' . $created_values['client_id'] . '<br/>';
-			$notice_success .= '<strong>' . __( 'Username:', 'wpispconfig' ) .'</strong> '. $created_values['username'] .'<br/>';
-			$notice_success .= '<strong>' . __( 'Password:', 'wpispconfig' ) .'</strong> '. $created_values['password'] .'<br/>';
-			$notice_success .= '<strong>' . __( 'Comapany name:', 'wpispconfig' ) .'</strong> '. $created_values['company_name'] .'<br/>';
-			$notice_success .= '<strong>' . __( 'Contact name:', 'wpispconfig' ) .'</strong> '. $created_values['contact_name'] .'<br/><br/>';
-			$notice_success .= '<strong>' . __( 'Email:', 'wpispconfig' ) .'</strong> '. $created_values['email']. '<br/><br/>';
+			$notices_success = array();
+
+			$notices_success[] = '<strong>' . __( 'Client ID:', 'wpispconfig' ) .'</strong> ' . $created_values['client_id'] . '<br/>';
+			$notices_success[] = '<strong>' . __( 'Username:', 'wpispconfig' ) .'</strong> '. $created_values['username'] .'<br/>';
+			$notices_success[] = '<strong>' . __( 'Password:', 'wpispconfig' ) .'</strong> '. $created_values['password'] .'<br/>';
+			$notices_success[] = '<strong>' . __( 'Comapany name:', 'wpispconfig' ) .'</strong> '. $created_values['company_name'] .'<br/>';
+			$notices_success[] = '<strong>' . __( 'Contact name:', 'wpispconfig' ) .'</strong> '. $created_values['contact_name'] .'<br/><br/>';
+			$notices_success[] = '<strong>' . __( 'Email:', 'wpispconfig' ) .'</strong> '. $created_values['email']. '<br/><br/>';
 
 
-			$notice_success .= '<strong>' . __( 'Server ID:', 'wpispconfig' ) .'</strong> '. $created_values['server_id'] .'<br/>';
-			$notice_success .= '<strong>' . __( 'DNS Zones added from DNS template:', 'wpispconfig' ) .'</strong> '. $created_values['template_id'] .'<br/><br/>';
+			$notices_success[] = '<strong>' . __( 'Server ID:', 'wpispconfig' ) .'</strong> '. $created_values['server_id'] .'<br/>';
+			$notices_success[] = '<strong>' . __( 'DNS Zones added from DNS template:', 'wpispconfig' ) .'</strong> '. $created_values['template_id'] .'<br/><br/>';
 
-			$notice_success .= '<strong>' . __( 'Web Domain ID:', 'wpispconfig' ) .'</strong> '. $created_values['domain_id'] .'<br/>';
-			$notice_success .= '<strong>' . __( 'Domain:', 'wpispconfig' ) .'</strong> '. $created_values['domain'] .'<br/><br/>';
+			$notices_success[] = '<strong>' . __( 'Web Domain ID:', 'wpispconfig' ) .'</strong> '. $created_values['domain_id'] .'<br/>';
+			$notices_success[] = '<strong>' . __( 'Domain:', 'wpispconfig' ) .'</strong> '. $created_values['domain'] .'<br/><br/>';
 
-			$notice_success .= '<strong>' . __( 'FTP User ID:', 'wpispconfig' ) .'</strong> '. $created_values['ftp_user_id'] .'<br/>';
-			$notice_success .= '<strong>' . __( 'FTP domain:', 'wpispconfig' ) .'</strong> '. $created_values['domain'] .'<br/>';
-			$notice_success .= '<strong>' . __( 'FTP User:', 'wpispconfig' ) .'</strong> '. $created_values['username'] .'<br/>';
-			$notice_success .= '<strong>' . __( 'FTP Pass:', 'wpispconfig' ) .'</strong> '. $created_values['password'] .'<br/>';
-			$notice_success .= '<strong>' . __( 'FTP dir:', 'wpispconfig' ) .'</strong> '. $created_values['ftp_dir'] .'<br/><br/>';
+			$notices_success[] = '<strong>' . __( 'FTP User ID:', 'wpispconfig' ) .'</strong> '. $created_values['ftp_user_id'] .'<br/>';
+			$notices_success[] = '<strong>' . __( 'FTP domain:', 'wpispconfig' ) .'</strong> '. $created_values['domain'] .'<br/>';
+			$notices_success[] = '<strong>' . __( 'FTP User:', 'wpispconfig' ) .'</strong> '. $created_values['username'] .'<br/>';
+			$notices_success[] = '<strong>' . __( 'FTP Pass:', 'wpispconfig' ) .'</strong> '. $created_values['password'] .'<br/>';
+			$notices_success[] = '<strong>' . __( 'FTP dir:', 'wpispconfig' ) .'</strong> '. $created_values['ftp_dir'] .'<br/><br/>';
 
-			$notice_success .= '<strong>' . __( 'Database User ID:', 'wpispconfig' ) .'</strong> '. $created_values['database_user_id'].'<br/>';
-			$notice_success .= '<strong>' . __( 'Database User:', 'wpispconfig' ) .'</strong> '. $created_values['username'] .'<br/>';
-			$notice_success .= '<strong>' . __( 'Database Pass:', 'wpispconfig' ) .'</strong> '. $created_values['password'] .'<br/>';
-			$notice_success .= '<strong>' . __( 'You must create Databases', 'wpispconfig' ) .'</strong> <br/><br/>';
+			$notices_success[] = '<strong>' . __( 'Database User ID:', 'wpispconfig' ) .'</strong> '. $created_values['database_user_id'].'<br/>';
+			$notices_success[] = '<strong>' . __( 'Database User:', 'wpispconfig' ) .'</strong> '. $created_values['username'] .'<br/>';
+			$notices_success[] = '<strong>' . __( 'Database Pass:', 'wpispconfig' ) .'</strong> '. $created_values['password'] .'<br/>';
+			$notices_success[] = '<strong>' . __( 'You must create Databases', 'wpispconfig' ) .'</strong> <br/><br/>';
 
-			$notice_success .= '<strong>' . __( 'New email ID:', 'wpispconfig' ) .'</strong> '. $created_values['email_id'] .'<br/>';
-			$notice_success .= '<strong>' . __( 'New e-mail account:', 'wpispconfig' ) .'</strong> '. $created_values['email_address'] .'<br/>';
-			$notice_success .= '<strong>' . __( 'Password:', 'wpispconfig' ) .'</strong> '. $created_values['password'] .'<br/>';
+			$notices_success[] = '<strong>' . __( 'New email ID:', 'wpispconfig' ) .'</strong> '. $created_values['email_id'] .'<br/>';
+			$notices_success[] = '<strong>' . __( 'New e-mail account:', 'wpispconfig' ) .'</strong> '. $created_values['email_address'] .'<br/>';
+			$notices_success[] = '<strong>' . __( 'Password:', 'wpispconfig' ) .'</strong> '. $created_values['password'] .'<br/>';
 
-			WPISPConfig_notices::add( $notice_success );
+			$notices_success = apply_filters('wpispconfig_all_in_one_success_notices', $notices_success, $created_values);
+
+			$sucess_notice = implode('', $notices_success);
+			WPISPConfig_notices::add( $sucess_notice );
+
 			wp_redirect($_POST['_wp_http_referer']);
 			die();
 
