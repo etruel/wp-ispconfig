@@ -41,7 +41,7 @@ class WPISPConfig_all_in_one {
        	
        	$options = WPISPConfig_Settings::get_option(); 
        	$template_dns = array();
-       
+       	$servers = array();
         ?>
 
         <div class="wrap">
@@ -66,14 +66,29 @@ class WPISPConfig_all_in_one {
 
 									try {
 										$soap = new SoapIspconfig($options);
-										//print_r($soap->get_function_list());
+										//print_r($soap->server_get_all());
 										$template_dns = $soap->dns_templatezone_get_all();
+										$servers = $soap->server_get_all();
 									} catch (Exception $e) {
 										echo '<div class="notice notice-error">' .$e->getMessage() . '</div>';
 									}
 								?>
 
 								<table class="form-table">
+									<tr>
+										<th scope="row">
+											<label for="server"><?php _e( 'Server:', 'wpispconfig' ); ?></label>
+										</th>
+										<td>
+											<select id="server" name="server">
+											<?php 
+												foreach ($servers as $key => $values) {
+													echo '<option value="' . $values['server_id'] . '">' . $values['server_name'] . '</option>';
+												}
+											?>	
+											</select>
+										</td>
+									</tr>
 									<tr>
 										<th scope="row">
 											<label for="dns_template_id"><?php _e( 'DNS Template ID:', 'wpispconfig' ); ?></label>
@@ -188,6 +203,7 @@ class WPISPConfig_all_in_one {
 	public static function create($array_values = array()) {
 		$options = WPISPConfig_Settings::get_option();
 
+		$server_id = (!empty($array_values['server']) ? $array_values['server'] : '1');
 		$client_name = (!empty($array_values['client_name']) ? $array_values['client_name'] : '');
 		$company_name = (!empty($array_values['company_name']) ? $array_values['company_name'] : '');
 		$email =  (!empty($array_values['email']) ? $array_values['email'] : '');
@@ -206,7 +222,6 @@ class WPISPConfig_all_in_one {
 		try {
 
 			$soap = new SoapIspconfig($options);
-			$template_dns = $soap->dns_templatezone_get_all();
 			$new_client =  array(
 								'company_name' 	=> $company_name,
 								'contact_name' 	=> $client_name,
@@ -230,6 +245,7 @@ class WPISPConfig_all_in_one {
 	        $dns_zone = $soap->dns_templatezone_add( $new_dns_templatezone );
 
 	        $new_website = array(
+	        					'server_id'		 => $server_id,
 					            'domain' 		 => $new_domain,
 					            'stats_password' => $password,
 					        );
@@ -238,6 +254,7 @@ class WPISPConfig_all_in_one {
 
 	        $ftp_dir = '/var/www/clients/client'. $client_id .'/web' . $domain_id;
 	        $new_ftp = array(
+	        					'server_id'		=> $server_id,
 					            'username' 		=> $username,
 					            'password' 		=> $password,
 					            'dir'           => $ftp_dir,
@@ -246,6 +263,7 @@ class WPISPConfig_all_in_one {
 	        $ftp_user_id = $soap->sites_ftp_user_add($client_id, $domain_id, $new_ftp );
 
 	        $new_database = array(
+	        					'server_id'				=> $server_id,
 					            'database_user' 		=> $username,
 					            'database_password' 	=> $password,
 					        );
@@ -256,6 +274,7 @@ class WPISPConfig_all_in_one {
 	        
 	        $new_email_address = $username . '@' . $new_domain;
 	        $new_email_options = array(
+	        					'server_id'		=> $server_id,
 					            'email' 		=> $new_email_address,
 					            'login' 		=> $new_email_address,
 					            'password' 		=> $password,
@@ -265,6 +284,7 @@ class WPISPConfig_all_in_one {
 	       $email_id = $soap->mail_user_add($client_id, $new_email_options);
 	        
 	        return array(
+	        	'server_id'			=> $server_id,
 	        	'client_id' 		=> $client_id, 
 	        	'company_name' 		=> $company_name, 
 	        	'contact_name' 		=> $contact_name, 
@@ -305,6 +325,8 @@ class WPISPConfig_all_in_one {
 			$notice_success .= '<strong>' . __( 'Contact name:', 'wpispconfig' ) .'</strong> '. $created_values['contact_name'] .'<br/><br/>';
 			$notice_success .= '<strong>' . __( 'Email:', 'wpispconfig' ) .'</strong> '. $created_values['email']. '<br/><br/>';
 
+
+			$notice_success .= '<strong>' . __( 'Server ID:', 'wpispconfig' ) .'</strong> '. $created_values['server_id'] .'<br/>';
 			$notice_success .= '<strong>' . __( 'DNS Zones added from DNS template:', 'wpispconfig' ) .'</strong> '. $created_values['template_id'] .'<br/><br/>';
 
 			$notice_success .= '<strong>' . __( 'Web Domain ID:', 'wpispconfig' ) .'</strong> '. $created_values['domain_id'] .'<br/>';

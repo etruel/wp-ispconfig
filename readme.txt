@@ -88,6 +88,7 @@ You should have received a copy of the GNU General Public License along with WP 
 * SE AGREGO UN TESTER DE CONEXION CON UN SOLO CLICK A UN BOTON.
 * SE AGREGO NONCE A TODAS LAS GUARDADO DE DATOS.
 * SE USA EL ADMIN POST HOOK PARA ENVIAR LOS POSTS DATA.
+* SE AGREGO EL SELECT DE SERVIDOR.
 
 = 1.0.3 =
 * Fixes a bug that breaks settings page in some cases.
