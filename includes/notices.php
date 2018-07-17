@@ -2,8 +2,7 @@
 /**
 * @package         etruel\ISPConfig
 * @subpackage 	   Notices
-* @author          Esteban Truelsegaard
-* @copyright       Copyright (c) 2018
+* @author          Esteban Truelsegaard <esteban@netmdp.com>
 */
 // Exit if accessed directly
 if (!defined('ABSPATH'))  {

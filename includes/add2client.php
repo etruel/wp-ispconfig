@@ -1,4 +1,9 @@
-<?php 
+<?php
+/**
+* @package         etruel\ISPConfig
+* @subpackage 	   Add2Client
+* @author          Esteban Truelsegaard <esteban@netmdp.com>
+*/ 
 if ( !defined('ABSPATH') ) {
 	header( 'Status: 403 Forbidden' );
 	header( 'HTTP/1.1 403 Forbidden' );
@@ -39,6 +44,7 @@ class WPISPConfig_Add2Client {
 					$values['email'] = self::$current_client_data['email'];
 					$values['username'] = self::$current_client_data['username'] . wp_generate_password(3, false, false);
 					$values['password'] = wp_generate_password(12, false, false);
+					$values['dns_email'] = str_replace('@', '.', $values['email']);
 
 				} catch (Exception $e) {
 					throw new Exception("Client does not exist with ID:" . $client_id, 1);

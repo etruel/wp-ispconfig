@@ -2,8 +2,7 @@
 /**
 * @package         etruel\ISPConfig
 * @subpackage 	   Settings
-* @author          The Team Mate at etruel.com
-* @copyright       Copyright (c) 2018
+* @author          Esteban Truelsegaard <esteban@netmdp.com>
 */
 // Exit if accessed directly
 if ( !defined('ABSPATH') ) {
@@ -49,7 +48,9 @@ class WPISPConfig_Settings {
 		}
 		
 		try {
-			$soap = new SoapIspconfig($options['WPISPConfig_Options']);
+
+			$api = wpispconfig_get_current_api($options['WPISPConfig_Options']);
+			
 		} catch (Exception $e) {
 			wp_die($e->getMessage());
 		}
@@ -112,7 +113,7 @@ class WPISPConfig_Settings {
 
         add_settings_field(
             'soapusername', // ID
-            'Soap Username:', // Title 
+            'Remote Username:', // Title 
             array(__CLASS__, 'settings_input' ), // Callback
             'wpispconfig_settings_general', // Page
             'wpispconfig_settings_general', // Section
@@ -126,7 +127,7 @@ class WPISPConfig_Settings {
         ); 
         add_settings_field(
             'soappassword', // ID
-            'Soap Password:', // Title 
+            'Remote Password:', // Title 
             array(__CLASS__, 'settings_input' ), // Callback
             'wpispconfig_settings_general', // Page
             'wpispconfig_settings_general', // Section
@@ -140,7 +141,21 @@ class WPISPConfig_Settings {
             )     
         ); 
 
-        
+        add_settings_field(
+       		'remote_type', 
+       		'Select type:', 
+       		array(__CLASS__, 'settings_input' ),
+       		'wpispconfig_settings_general', 
+       		'wpispconfig_settings_general',
+       		array( 
+            	'option_name' => WPISPConfig::OPTION_KEY,
+            	'option_id' 	=> 'remote_type',
+            	'label_for' 	=> WPISPConfig::OPTION_KEY . '_' . 'remote_type',
+            	'input_type' 	=> 'radio', 
+            	'radios'		=> array('restapi' => 'Rest Api', 'soap' => 'Soap'),
+  				'option_class'	=> 'settings-api-type',
+            ) 
+       	);
        
        	
        	add_settings_field(
@@ -159,8 +174,24 @@ class WPISPConfig_Settings {
         ); 
 
         add_settings_field(
+            'restapi_location', // ID
+            'Rest Api Location:', // Title 
+            array(__CLASS__, 'settings_input' ), // Callback
+            'wpispconfig_settings_general', // Page
+            'wpispconfig_settings_general', // Section
+            array( 
+            	'option_name' => WPISPConfig::OPTION_KEY,
+            	'option_id' => 'restapi_location',
+                'option_class' => 'regular-text',
+            	'label_for' => WPISPConfig::OPTION_KEY . '_' . 'restapi_location',
+            
+            )     
+        );
+       	
+
+        add_settings_field(
             'soap_uri', // ID
-            'Soap URI:', // Title 
+            'Remote URI:', // Title 
             array(__CLASS__, 'settings_input' ), // Callback
             'wpispconfig_settings_general', // Page
             'wpispconfig_settings_general', // Section
@@ -192,6 +223,7 @@ class WPISPConfig_Settings {
 
 		   
 	}
+
 	
 
     public static function settings_input($args) {
@@ -213,6 +245,22 @@ class WPISPConfig_Settings {
 
 				break;
 
+			case 'radio':
+
+				foreach ($args['radios'] as $value => $text) : ?>
+					<label>
+					<input class="<?php echo $args['option_class']; ?>" type="<?php echo $type_input; ?>" <?php checked($value, self::$options[$args['option_id']], true); ?> id="<?php echo $args['option_name']. '_'. $args['option_id'] . '_' . $value; ?>" name="<?php echo $args['option_name']; ?>[<?php echo $args['option_id']; ?>]" value="<?php echo $value; ?>" /> 
+					<strong><?php echo $text; ?></strong></label><br/>
+				<?php 
+				endforeach;
+
+				if (!empty($args['text_after'])) {
+					echo $args['text_after'];
+				}
+				if (!empty($args['help_text'])) : ?>
+					<p class="description"><?php echo $args['help_text']; ?></p>
+				<?php endif;
+				break;
 			default:
 				?>
 				<input class="<?php echo $args['option_class']; ?>" type="<?php echo $type_input; ?>" id="<?php echo $args['option_name']. '_'. $args['option_id']; ?>" name="<?php echo $args['option_name']; ?>[<?php echo $args['option_id']; ?>]" value="<?php echo $value; ?>" /> 
@@ -245,8 +293,10 @@ class WPISPConfig_Settings {
 
        	$new_input['skip_ssl'] = ( isset( $input['skip_ssl'] ) ? absint( $input['skip_ssl'] ) : 0 );
 
-
+       	$new_input['remote_type'] = ( !empty( $input['remote_type'] ) ? $input['remote_type']  : 'soap' );
        
+       	$new_input['restapi_location'] = ( !empty( $input['restapi_location'] ) ? $input['restapi_location']  : 'http://localhost:8080/remote/json.php' );
+
        
         return $new_input;
     }
@@ -313,7 +363,7 @@ class WPISPConfig_Settings {
 								<?php
 									do_settings_sections( 'wpispconfig_settings_general' );
 								?>
-								<button class="button" id="btn-test-connection"><?php _e('Test connection', 'wpispconfig'); ?></button>
+								<button class="button" type="button" id="btn-test-connection"><?php _e('Test connection', 'wpispconfig'); ?></button>
 								<div id="test-connection-div" style="display: none;">
 									<span class="spinner"></span>
 									<p id="test-connection-message"><?php _e('Loading...', 'wpispconfig'); ?></p></div>

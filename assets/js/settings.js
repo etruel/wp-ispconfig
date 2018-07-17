@@ -1,5 +1,10 @@
 jQuery(document).ready(function($) {
 	
+	onchange_type();
+	jQuery('.settings-api-type').change(function() {
+		onchange_type();
+	});
+
 	jQuery('#btn-test-connection').click(function(e) {
 		jQuery(this).prop('disabled', true);
 		jQuery('#test-connection-div').fadeIn();
@@ -38,3 +43,13 @@ jQuery(document).ready(function($) {
 		});
 	});
 });
+
+function onchange_type() {
+	if (jQuery('.settings-api-type:checked').val() == 'soap') {
+		jQuery('#WPISPConfig_Options_restapi_location').parent().parent().fadeOut();
+		jQuery('#WPISPConfig_Options_soap_location').parent().parent().fadeIn();
+	} else {
+		jQuery('#WPISPConfig_Options_restapi_location').parent().parent().fadeIn();
+		jQuery('#WPISPConfig_Options_soap_location').parent().parent().fadeOut();
+	}
+}

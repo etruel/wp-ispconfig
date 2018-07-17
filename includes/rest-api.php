@@ -1,7 +1,7 @@
 <?php 
 /**
 * @package         etruel\ISPConfig
-* @subpackage      SoapISPConfig
+* @subpackage      RestApi
 * @author          Esteban Truelsegaard <esteban@netmdp.com>
 */
 // Exit if accessed directly
@@ -10,58 +10,87 @@ if ( !defined('ABSPATH') ) {
     header( 'HTTP/1.1 403 Forbidden' );
     exit();
 }
-class SoapIspconfig {
+class RestApiISPConfig {
 
-
-    private $soap;
+    private $rest_api_url;
     private $session_id;
-
-
-
+    private $sslverify = true;
     public function __construct($options){
-        $soap_options = array('location' => $options['soap_location'], 'uri' => $options['soap_uri'], 'trace' => 1, 'exceptions' => 1);
        
-        
         if($options['skip_ssl']) {
             // apply stream context to disable ssl checks
-            $soap_options['stream_context'] = stream_context_create(array(
-                'ssl' => array(
-                    'verify_peer'       => false,
-                    'verify_peer_name'  => false,
-                    'allow_self_signed' => true
-                )
-            ));
+            $this->sslverify = false;
         }
-
-        if (!class_exists('SoapClient')) {
-            throw new Exception('SoapClient class does not exist. Please add it to your PHP.ini', 1);
-            return false;
-        }
-
-        $this->soap = new SoapClient(null, $soap_options);
-        $this->session_id = $this->soap->login($options['soapusername'], $options['soappassword']);
+        $this->rest_api_url = $options['restapi_location'];
+        $this->session_id = $this->request('login', array('username' => $options['soapusername'], 'password' => $options['soappassword']) );
         return $this;
+    }
+
+    public function request($method, $params) {
+
+        $new_request = $this->rest_api_url . '?' .$method;
+        $response = wp_remote_post($new_request, array(
+                'method' => 'POST',
+                'timeout' => 45,
+                'redirection' => 5,
+                'httpversion' => '1.0',
+                'blocking' => true,
+                'headers' => array(),
+                'body' => json_encode($params),
+                'cookies' => array(),
+                'sslverify' => $this->sslverify,
+            )
+        );
+        if ( is_wp_error( $response ) ) {
+            throw new Exception($response->get_error_message(), 1);
+        } 
+        $res = json_decode($response['body'], true);
+
+        if (isset($res['code'])) {
+            if ($res['code'] != 'ok') {
+                $error_message = (!empty($res['message']) ? $res['message'] : 'An error has been ocurred!');
+                throw new Exception($error_message, 1);
+            }
+        }
+        return $res['response'];
     }
     
    
     public function get_client_by_user($username){
-       
-        return $this->soap->client_get_by_username($this->session_id, $username);
+        $params_api = array(
+            'session_id'    => $this->session_id,
+            'username'      => $username,
+        );
+
+        return $this->request('client_get_by_username', $params_api);
         
     }
 
     public function get_function_list() {
-        return $this->soap->get_function_list($this->session_id);
+        $params_api = array(
+            'session_id'    => $this->session_id,
+        );
+
+        return $this->request('get_function_list', $params_api);
     }
 
     public function server_get_all() {
-        return $this->soap->server_get_all($this->session_id);
+        $params_api = array(
+            'session_id'    => $this->session_id,
+        );
+
+        return $this->request('server_get_all', $params_api);
     }
 
     public function dns_templatezone_get_all() {
         $ret = array();
         if (in_array('dns_templatezone_get_all', $this->get_function_list())) {
-            $ret = $this->soap->dns_templatezone_get_all($this->session_id);
+            
+            $params_api = array(
+                'session_id'    => $this->session_id,
+            );
+
+            return $this->request('dns_templatezone_get_all', $params_api);
         }
         return $ret;
     }
@@ -143,8 +172,12 @@ class SoapIspconfig {
         if (!is_email($new_options['email'])) {
             throw new Exception("Error invalid email");
         }
-     
-        return $this->soap->client_add($this->session_id, $reseller_id, $new_options);
+        $params_api = array(
+            'session_id'    => $this->session_id,
+            'reseller_id'   => $reseller_id,
+            'params'        => $new_options,
+        );
+        return $this->request('client_add', $params_api);
 
     }
 
@@ -159,8 +192,12 @@ class SoapIspconfig {
             'email' => '',
         );
         $new_options = wp_parse_args($options, $default_options);
-        extract($new_options);
-        return $this->soap->dns_templatezone_add($this->session_id, $client_id, $template_id, $domain, $ip, $ns1, $ns2, $dns_email);
+
+        $params_api = array(
+            'session_id'    => $this->session_id,
+        );
+        $params_api = wp_parse_args($params_api, $new_options);
+        return $this->request('dns_templatezone_add', $params_api);
     }
 
     public function add_website( $client_id = 0, $options = array() ){
@@ -213,9 +250,14 @@ class SoapIspconfig {
             'read_only' => false
         );
         
-       $new_options = wp_parse_args($options, $default_options);
-        
-       return $this->soap->sites_web_domain_add($this->session_id, $client_id, $new_options, $new_options['read_only']);
+        $new_options = wp_parse_args($options, $default_options);
+        $params_api = array(
+            'session_id'    => $this->session_id,
+            'client_id'     => $client_id,
+            'params'        => $new_options,
+            'readonly'      => $new_options['read_only'],
+        );
+        return $this->request('sites_web_domain_add', $params_api);
 
     }
 
@@ -237,8 +279,13 @@ class SoapIspconfig {
             'dl_bandwidth'      => -1
         );
         
-       $new_options = wp_parse_args($options, $default_options);        
-       return $this->soap->sites_ftp_user_add($this->session_id, $client_id, $new_options);
+       $new_options = wp_parse_args($options, $default_options);
+       $params_api = array(
+            'session_id'    => $this->session_id,
+            'client_id'     => $client_id,
+            'params'        => $new_options,
+        );
+        return $this->request('sites_ftp_user_add', $params_api);
 
     }
     
@@ -249,8 +296,13 @@ class SoapIspconfig {
             'database_password' => '',
         );
         
-       $new_options = wp_parse_args($options, $default_options);        
-       return $this->soap->sites_database_user_add($this->session_id, $client_id, $new_options);
+       $new_options = wp_parse_args($options, $default_options);
+       $params_api = array(
+            'session_id'    => $this->session_id,
+            'client_id'     => $client_id,
+            'params'        => $new_options,
+        );
+        return $this->request('sites_database_user_add', $params_api);        
 
     }
 
@@ -261,8 +313,13 @@ class SoapIspconfig {
             'active' => 'y'
         );
         
-       $new_options = wp_parse_args($options, $default_options);        
-       return $this->soap->mail_domain_add($this->session_id, $client_id, $new_options);
+       $new_options = wp_parse_args($options, $default_options);
+       $params_api = array(
+            'session_id'    => $this->session_id,
+            'client_id'     => $client_id,
+            'params'        => $new_options,
+        );
+        return $this->request('mail_domain_add', $params_api);         
 
     }
 
@@ -293,25 +350,48 @@ class SoapIspconfig {
             'disablesmtp' => 'n',
         );
          
-       $new_options = wp_parse_args($options, $default_options);        
-       return $this->soap->mail_user_add($this->session_id, $client_id, $new_options);
+       $new_options = wp_parse_args($options, $default_options); 
+       $params_api = array(
+            'session_id'    => $this->session_id,
+            'client_id'     => $client_id,
+            'params'        => $new_options,
+        );
+        return $this->request('mail_user_add', $params_api);        
 
     }
 
     public function client_get_all() {
-         return $this->soap->client_get_all($this->session_id);
+        $params_api = array(
+            'session_id'    => $this->session_id,
+        );
+
+        return $this->request('client_get_all', $params_api);
     }
     public function client_get($client_id) {
-        return $this->soap->client_get($this->session_id, $client_id);
+        
+        $params_api = array(
+            'session_id'    => $this->session_id,
+            'client_id'     => $client_id,
+        );
+
+        return $this->request('client_get', $params_api);
     }
 
 
     public function client_get_groupid($primary_id) {
-        return $this->soap->client_get_groupid($this->session_id, $primary_id);        
+        $params_api = array(
+            'session_id'    => $this->session_id,
+            'client_id'     => $primary_id,
+        );
+        return $this->request('client_get_groupid', $params_api);     
     }
 
     public function sites_web_domain_get($primary_id) {
-        return $this->soap->sites_web_domain_get($this->session_id, $primary_id);        
+        $params_api = array(
+            'session_id'    => $this->session_id,
+            'primary_id'     => $primary_id,
+        );
+        return $this->request('sites_web_domain_get', $params_api);      
     }
         
     public function sites_web_aliasdomain_add($client_id, $options = array()) {
@@ -360,8 +440,13 @@ class SoapIspconfig {
             'traffic_quota_lock' => 'n'
         );
          
-       $new_options = wp_parse_args($options, $default_options);        
-       return $this->soap->sites_web_aliasdomain_add($this->session_id, $client_id, $new_options);
+       $new_options = wp_parse_args($options, $default_options);
+       $params_api = array(
+            'session_id'    => $this->session_id,
+            'client_id'     => $client_id,
+            'params'        => $new_options,
+        );
+        return $this->request('sites_web_aliasdomain_add', $params_api);        
     }
 
 }

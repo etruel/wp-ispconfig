@@ -1,4 +1,9 @@
 <?php
+/**
+* @package         etruel\ISPConfig
+* @subpackage 	   Domain Alias
+* @author          Esteban Truelsegaard <esteban@netmdp.com>
+*/ 
 if ( !defined('ABSPATH') ) {
 	header( 'Status: 403 Forbidden' );
 	header( 'HTTP/1.1 403 Forbidden' );
@@ -59,11 +64,12 @@ class WPISPConfig_Domain_Alias {
 		$options = WPISPConfig_Settings::get_option(); 
 
 		try {
-
-			$soap = new SoapIspconfig($options);
+			$api = wpispconfig_get_current_api($options);
+			//$soap = new SoapIspconfig($options);
 			
-			$sys_groupid = $soap->client_get_groupid($client_id);
-			$results = $soap->sites_web_domain_get(array('sys_groupid' => $sys_groupid ));
+			$sys_groupid = $api->client_get_groupid($client_id);
+			
+			$results = $api->sites_web_domain_get(array('sys_groupid' => $sys_groupid ));
 			$result = array();
 			$select_html = '';
 			if (empty($results)) {
@@ -116,15 +122,16 @@ class WPISPConfig_Domain_Alias {
 										<?php _e( 'This will create an alias domain for client and domain with DNS zone from DNS template.', 'wpispconfig' );?><br />
 								
 								<?php
-									$soap = null;
+									$api = null;
 									try {
-										$soap = new SoapIspconfig($options);
-										$clients = $soap->client_get_all();
+										$api = wpispconfig_get_current_api($options);
+										//$soap = new SoapIspconfig($options);
+										$clients = $api->client_get_all();
 										foreach ($clients as $key => $client_id) {
-											$client_data[] = $soap->client_get($client_id);
+											$client_data[] = $api->client_get($client_id);
 										}
-										$servers = $soap->server_get_all();
-										$template_dns = $soap->dns_templatezone_get_all();
+										$servers = $api->server_get_all();
+										$template_dns = $api->dns_templatezone_get_all();
 									} catch (Exception $e) {
 										echo '<div class="notice notice-error">' .$e->getMessage() . '</div>';
 									}
@@ -285,15 +292,15 @@ class WPISPConfig_Domain_Alias {
 
 
 		try {
-
-			$soap = new SoapIspconfig($options);
-
+			$api = wpispconfig_get_current_api($options);
+			//$soap = new SoapIspconfig($options);
+			
 			$new_aliasdomain = array( 
 								'domain' 			=>  $values['domain'], 
 								'parent_domain_id' 	=> $values['domain_id'],
 							);
 
-			$aliasdomain_id = $soap->sites_web_aliasdomain_add($values['client_id'], $new_aliasdomain);
+			$aliasdomain_id = $api->sites_web_aliasdomain_add($values['client_id'], $new_aliasdomain);
 
 			$new_dns_templatezone = array(
 					            'client_id' 	=> $values['client_id'],
@@ -302,9 +309,9 @@ class WPISPConfig_Domain_Alias {
 					            'ip' 			=> $values['client_ip'],
 					            'ns1' 			=> $values['ns1'],
 					            'ns2' 			=> $values['ns2'],
-					            'dns_email' 	=> $values['dns_email'],
+					            'email' 		=> $values['dns_email'],
 					        );
-	        $dns_zone = $soap->dns_templatezone_add( $new_dns_templatezone );
+	        $dns_zone = $api->dns_templatezone_add( $new_dns_templatezone );
 			
 	        return array(
 	        	'aliasdomain_id'	=> $aliasdomain_id,

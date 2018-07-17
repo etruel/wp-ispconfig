@@ -2,8 +2,7 @@
 /**
 * @package         etruel\ISPConfig
 * @subpackage 	   All in one
-* @author          The Team Mate at etruel.com
-* @copyright       Copyright (c) 2018
+* @author          Esteban Truelsegaard <esteban@netmdp.com>
 */
 // Exit if accessed directly
 if ( !defined('ABSPATH') ) {
@@ -26,10 +25,10 @@ class WPISPConfig_all_in_one {
 		
 	    $page = add_submenu_page( 
 	    	'ispconfig_settings', 
-	    	'All in one', 
-	    	'All in one',
+	    	'New Website', 
+	    	'<img src="' . WPISPCONFIG_PLUGIN_URL .'assets/images/pror.png'.'" style="margin: 0pt 2px -2px 0pt;"><span>' . 'New Website',
     		'manage_options', 
-    		'wpispconfig_allinone',
+    		'wpispconfig_new_website',
     		array(__CLASS__, 'page')
     	);
 
@@ -55,7 +54,7 @@ class WPISPConfig_all_in_one {
         ?>
 
         <div class="wrap">
-		<h2><?php _e('All in one', 'wpispconfig'); ?></h2>
+		<h2><?php _e('New Website', 'wpispconfig'); ?></h2>
 		<form name="wpispconfig-allinone" method="post" autocomplete="off" action="<?php echo admin_url( 'admin-post.php' ); ?>">
 			<input type="hidden" name="action" value="ispconfig_allinone_save"/>
 			<?php
@@ -73,17 +72,19 @@ class WPISPConfig_all_in_one {
 								<p></p>
 								
 								<?php
-									$soap = null;
+									$api = null;
 									try {
-										$soap = new SoapIspconfig($options);
+										$api = wpispconfig_get_current_api($options);
+										//$soap = new SoapIspconfig($options);
 										//print_r($soap->server_get_all());
-										$template_dns = $soap->dns_templatezone_get_all();
-										$servers = $soap->server_get_all();
+										$template_dns = $api->dns_templatezone_get_all();
+										$servers = $api->server_get_all();
+
 									} catch (Exception $e) {
 										echo '<div class="notice notice-error">' .$e->getMessage() . '</div>';
 									}
 
-									do_action('wpispconfig_all_in_one_before_table', $soap);
+									do_action('wpispconfig_all_in_one_before_table', $api);
 								?>
 
 								<table class="form-table" id="client_table">
@@ -239,8 +240,9 @@ class WPISPConfig_all_in_one {
 
 		try {
 
-			$soap = new SoapIspconfig($options);
-			$values = apply_filters('wpispconfig_values_all_in_one_before_create', $values, $array_values, $soap);	
+			$api = wpispconfig_get_current_api($options);
+			//$soap = new SoapIspconfig($options);
+			$values = apply_filters('wpispconfig_values_all_in_one_before_create', $values, $array_values, $api);	
 
 			if (empty($values['client_id'])) {
 
@@ -253,7 +255,7 @@ class WPISPConfig_all_in_one {
 
 							);
 
-				$values['client_id'] = $soap->add_client( $new_client);
+				$values['client_id'] = $api->add_client( $new_client);
 			}
 			
 
@@ -264,9 +266,9 @@ class WPISPConfig_all_in_one {
 					            'ip' 			=> $values['client_ip'],
 					            'ns1' 			=> $values['ns1'],
 					            'ns2' 			=> $values['ns2'],
-					            'dns_email' 	=> $values['dns_email'],
+					            'email' 		=> $values['dns_email'],
 					        );
-	        $dns_zone = $soap->dns_templatezone_add( $new_dns_templatezone );
+	        $dns_zone = $api->dns_templatezone_add( $new_dns_templatezone );
 
 	        $new_website = array(
 	        					'server_id'		 => $values['server_id'],
@@ -274,7 +276,7 @@ class WPISPConfig_all_in_one {
 					            'stats_password' => $values['password'],
 					        );
 
-	        $domain_id = $soap->add_website($values['client_id'], $new_website );
+	        $domain_id = $api->add_website($values['client_id'], $new_website );
 
 	        $ftp_dir = '/var/www/clients/client'. $values['client_id'] .'/web' . $domain_id;
 	        $new_ftp = array(
@@ -284,7 +286,7 @@ class WPISPConfig_all_in_one {
 					            'dir'           => $ftp_dir,
 					        );
 
-	        $ftp_user_id = $soap->sites_ftp_user_add($values['client_id'], $domain_id, $new_ftp );
+	        $ftp_user_id = $api->sites_ftp_user_add($values['client_id'], $domain_id, $new_ftp );
 
 	        $new_database = array(
 	        					'server_id'				=> $values['server_id'],
@@ -292,9 +294,9 @@ class WPISPConfig_all_in_one {
 					            'database_password' 	=> $values['password'],
 					        );
 
-	        $database_user_id = $soap->sites_database_user_add($values['client_id'], $new_database );
+	        $database_user_id = $api->sites_database_user_add($values['client_id'], $new_database );
 
-	        $soap->mail_domain_add($values['client_id'], array( 'domain' => $values['new_domain']) );
+	        $api->mail_domain_add($values['client_id'], array( 'domain' => $values['new_domain']) );
 	        
 	        $new_email_address = $values['username'] . '@' . $values['new_domain'];
 	        $new_email_options = array(
@@ -305,7 +307,7 @@ class WPISPConfig_all_in_one {
 					            'name' 			=> $values['client_name'],
 					            'maildir'		=>  '/var/vmail/'. $values['new_domain'] .'/'.$values['username'],
 					        );
-	       $email_id = $soap->mail_user_add($values['client_id'], $new_email_options);
+	       $email_id = $api->mail_user_add($values['client_id'], $new_email_options);
 	        
 	        return array(
 	        	'server_id'			=> $values['server_id'],
