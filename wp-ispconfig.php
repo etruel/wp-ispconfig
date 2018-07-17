@@ -95,6 +95,8 @@ class WPISPConfig {
 		require_once WPISPCONFIG_PLUGIN_DIR . 'includes/all_in_one.php';
 		require_once WPISPCONFIG_PLUGIN_DIR . 'includes/soap_ispconfig.php';
 		require_once WPISPCONFIG_PLUGIN_DIR . 'includes/notices.php';
+		require_once WPISPCONFIG_PLUGIN_DIR . 'includes/add2client.php';
+		require_once WPISPCONFIG_PLUGIN_DIR . 'includes/domain-alias.php';
 		
 	}
 
