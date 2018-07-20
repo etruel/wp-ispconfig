@@ -11,20 +11,25 @@ if ( !defined('ABSPATH') ) {
 	exit();
 }
 
-if (!class_exists('WPISPConfig_all_in_one')) :
-class WPISPConfig_all_in_one {
+if (!class_exists('WPISPConfig_New_Website')) :
+class WPISPConfig_New_Website {
+
+	private static $current_client_data = array();
 
 	public static function hooks() {
 		if ( is_admin() ){ // admin actions
 			add_action('admin_menu', array(__CLASS__, 'menu') );
 		}
 		add_action( 'admin_post_ispconfig_allinone_save', array(__CLASS__, 'save'));
+		add_action('wpispconfig_all_in_one_before_table', array(__CLASS__, 'form_inputs_before'), 10, 1);
+		add_filter('wpispconfig_all_in_one_success_notices', array(__CLASS__, 'notices_success'), 10, 2);
+		add_filter('wpispconfig_values_all_in_one_before_create', array(__CLASS__, 'before_create'), 10, 3);
 	}
 
 	public static function menu() {
 		
 	    $page = add_submenu_page( 
-	    	'ispconfig_settings', 
+	    	'ispconfig_dashboard', 
 	    	'New Website', 
 	    	'<img src="' . WPISPCONFIG_PLUGIN_URL .'assets/images/pror.png'.'" style="margin: 0pt 2px -2px 0pt;"><span>' . 'New Website',
     		'manage_options', 
@@ -40,6 +45,7 @@ class WPISPConfig_all_in_one {
 		do_action('wpispconfig_all_in_one_add_styles');
 	}
 	public static function add_scripts() {
+		wp_enqueue_script( 'wpcispconfig-new-website', WPISPCONFIG_PLUGIN_URL . 'assets/js/new-website.js', array( 'jquery' ), WPISPCONFIG_VERSION, true );
 		do_action('wpispconfig_all_in_one_add_scripts');
 	}
 
@@ -49,6 +55,7 @@ class WPISPConfig_all_in_one {
         }
        	
        	$options = WPISPConfig_Settings::get_option(); 
+       	$default_values = WPISPConfig_DefaultValues::get_option();
        	$template_dns = array();
        	$servers = array();
         ?>
@@ -121,6 +128,9 @@ class WPISPConfig_all_in_one {
 											<input class="regular-text" type="text" id="username" name="username" value="">
 										</td>
 									</tr>
+									
+								</table>
+								<table class="form-table">
 									<tr>
 										<th scope="row">
 											<label for="password"><?php _e( 'Client Password:', 'wpispconfig' ); ?></label>
@@ -129,8 +139,6 @@ class WPISPConfig_all_in_one {
 											<input class="regular-text" type="text" id="password" name="password" value="<?php echo wp_generate_password(12, false, false); ?>">
 										</td>
 									</tr>
-								</table>
-								<table class="form-table">
 									<tr>
 										<th scope="row">
 											<label for="server"><?php _e( 'Server:', 'wpispconfig' ); ?></label>
@@ -179,7 +187,7 @@ class WPISPConfig_all_in_one {
 											<label for="client_ip"><?php _e( 'Client IP:', 'wpispconfig' ); ?></label>
 										</th>
 										<td>
-											<input class="regular-text" type="text" id="client_ip" name="client_ip" value="">
+											<input class="regular-text" type="text" id="client_ip" name="client_ip" value="<?php echo $default_values['client_ip'] ?>">
 										</td>
 									</tr>	
 									<tr>
@@ -187,7 +195,7 @@ class WPISPConfig_all_in_one {
 											<label for="ns1"><?php _e( 'NameServer 1:', 'wpispconfig' ); ?></label>
 										</th>
 										<td>
-											<input class="regular-text" type="text" id="ns1" name="ns1" value="">
+											<input class="regular-text" type="text" id="ns1" name="ns1" value="<?php echo $default_values['ns1'] ?>">
 										</td>
 									</tr>
 									<tr>
@@ -195,7 +203,7 @@ class WPISPConfig_all_in_one {
 											<label for="ns2"><?php _e( 'NameServer 2:', 'wpispconfig' ); ?></label>
 										</th>
 										<td>
-											<input class="regular-text" type="text" id="ns2" name="ns2" value="">
+											<input class="regular-text" type="text" id="ns2" name="ns2" value="<?php echo $default_values['ns2'] ?>">
 										</td>
 									</tr>
 								</table>
@@ -216,6 +224,79 @@ class WPISPConfig_all_in_one {
 	</div><!-- .wrap -->
         <?php
 	}
+	public static function form_inputs_before($soap) { 
+		$clients = array();
+		$client_data = array();
+		if (!empty($soap)) {
+			try {
+				$clients = $soap->client_get_all();
+				foreach ($clients as $key => $client_id) {
+					$client_data[] = $soap->client_get($client_id);
+				}
+			} catch (Exception $e) {
+				echo '<div class="notice notice-error">' .$e->getMessage() . '</div>';
+			}
+
+		}
+		
+		?>
+		<table class="form-table">
+			<tr>
+				<th scope="row">
+					<label for="exist_client"><?php _e( 'Existing client:', 'wpispconfig' ); ?></label>
+				</th>
+				<td>
+					<input type="checkbox" id="exist_client" name="exist_client" value="1">
+				</td>
+			</tr>
+			<tr id="tr_client_select" style="display: none;">
+				<th scope="row">
+					<label for="exist_client"><?php _e( 'Select Client:', 'wpispconfig' ); ?></label>
+				</th>
+				<td>
+					<select id="client_id" name="client_id">
+					<?php 
+						foreach ($client_data as $key => $values) {
+							echo '<option value="' . $values['client_id'] . '">' . $values['client_id'] . ' | ' . $values['contact_name'] . ' | ' . $values['company_name'] . '</option>';
+						}
+					?>
+					</select>
+					
+				</td>
+			</tr>
+		</table>
+	<?php
+	}
+	public static function notices_success($notices_success, $created_values) {
+		if (!empty(self::$current_client_data)) {
+			$notices_success[0] = '<strong>' . __( 'Using an existing client ID:', 'wpispconfig' ) .'</strong> ' . $created_values['client_id'] . '<br/>';
+			$notices_success[1] = '<strong>' . __( 'Username:', 'wpispconfig' ) .'</strong> '. self::$current_client_data['username'] .'<br/>';
+			unset($notices_success[2]);
+		}
+		return $notices_success;
+	}
+	public static function before_create($values, $input_values, $soap) {
+		if (!empty($input_values['exist_client'])) {
+			if (!empty($input_values['client_id'])) {
+				$client_id = intval($input_values['client_id']);
+				try {
+					self::$current_client_data = $soap->client_get($client_id);
+					$values['client_id'] = $client_id;
+					$values['client_name'] = self::$current_client_data['contact_name'];
+					$values['company_name'] = self::$current_client_data['company_name'];
+					$values['email'] = self::$current_client_data['email'];
+					$values['username'] = self::$current_client_data['username'] . wp_generate_password(3, false, false);
+					$values['dns_email'] = str_replace('@', '.', $values['email']);
+
+				} catch (Exception $e) {
+					throw new Exception("Client does not exist with ID:" . $client_id, 1);
+				}
+			}
+		}
+		return $values;
+	}
+
+	
 	public static function create($array_values = array()) {
 		$options = WPISPConfig_Settings::get_option();
 
@@ -241,7 +322,6 @@ class WPISPConfig_all_in_one {
 		try {
 
 			$api = wpispconfig_get_current_api($options);
-			//$soap = new SoapIspconfig($options);
 			$values = apply_filters('wpispconfig_values_all_in_one_before_create', $values, $array_values, $api);	
 
 			if (empty($values['client_id'])) {
@@ -397,6 +477,6 @@ class WPISPConfig_all_in_one {
 }
 endif;
 
-WPISPConfig_all_in_one::hooks();
+WPISPConfig_New_Website::hooks();
 
 ?>

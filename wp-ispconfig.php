@@ -2,7 +2,7 @@
 /**
 * Plugin Name: WP-ISPConfig
 * Description: This plugin allow manage some features of ISPConfig with remote user.
-* Version: 1.1
+* Version: 3.0
 * Author: Esteban Truelsegaard <esteban@netmdp.com>
 * Author URI: https://etruel.com/
 * Text Domain: wpispconfig
@@ -20,7 +20,7 @@ if ( !defined('ABSPATH') ) {
 
 // Plugin version
 if (!defined('WPISPCONFIG_VERSION')) {
-	define('WPISPCONFIG_VERSION', '1.1' ); 
+	define('WPISPCONFIG_VERSION', '3.0' ); 
 } 
 
 
@@ -28,13 +28,13 @@ if (!class_exists('WPISPConfig')) :
 /**
 * Main WPISPConfig class
 *
-* @since 1.1
+* @since 3.0
 */
 class WPISPConfig {
 
 	 /**
      * @var         WPISPConfig $init Bool  if the class was started
-     * @since       1.1
+     * @since       3.0
      */
     private static $init = false;
 
@@ -43,7 +43,7 @@ class WPISPConfig {
 	 /**
      * This function starts the main class.
      * @access      public
-     * @since       1.1
+     * @since       3.0
      * @return      void
      */
     public static function init() {
@@ -59,7 +59,7 @@ class WPISPConfig {
 	* Static function constants
 	* @access public
 	* @return void
-	* @since 1.1
+	* @since 3.0
 	*/
 	public static function constants() {
 		// Plugin Folder Path
@@ -88,17 +88,18 @@ class WPISPConfig {
 	* Static function includes
 	* @access public
 	* @return void
-	* @since 1.0.0
+	* @since 3.0
 	*/
 	public static function includes() {
+		require_once WPISPCONFIG_PLUGIN_DIR . 'includes/dashboard.php';
 		require_once WPISPCONFIG_PLUGIN_DIR . 'includes/settings.php';
-		require_once WPISPCONFIG_PLUGIN_DIR . 'includes/all_in_one.php';
+		require_once WPISPCONFIG_PLUGIN_DIR . 'includes/new-website.php';
 		require_once WPISPCONFIG_PLUGIN_DIR . 'includes/soap_ispconfig.php';
 		require_once WPISPCONFIG_PLUGIN_DIR . 'includes/notices.php';
-		require_once WPISPCONFIG_PLUGIN_DIR . 'includes/add2client.php';
 		require_once WPISPCONFIG_PLUGIN_DIR . 'includes/domain-alias.php';
 		require_once WPISPCONFIG_PLUGIN_DIR . 'includes/rest-api.php';
 		require_once WPISPCONFIG_PLUGIN_DIR . 'includes/functions.php';
+		require_once WPISPCONFIG_PLUGIN_DIR . 'includes/default-values.php';
 		
 	}
 
@@ -107,7 +108,7 @@ class WPISPConfig {
 	* Add all hooks needs to primary feature.
 	* @access public
 	* @return void
-	* @since 1.0.0
+	* @since 3.0
 	*/
 	public static function hooks() {
 		//add_filter( 'wpematico_plugins_updater_args', array(__CLASS__, 'add_updater'), 10, 1);
@@ -118,7 +119,7 @@ class WPISPConfig {
 	* Load the text domain.
 	* @access public
 	* @return void
-	* @since 1.0.0
+	* @since 3.0
 	*/
 	public static function load_text_domain() {
 		// Set filter for plugin's languages directory

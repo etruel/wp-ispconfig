@@ -11,12 +11,13 @@ if ( !defined('ABSPATH') ) {
 	exit();
 }
 
-if (!class_exists('WPISPConfig_Settings')) :
-class WPISPConfig_Settings {
+if (!class_exists('WPISPConfig_DefaultValues')) :
+class WPISPConfig_DefaultValues {
 
 	public static $setting_page;
 	public static $setting_id;
 	public static $options;
+	const OPTION_KEY = 'WPISPConfig_DefaultValues';
 	/**
 	* Static function hooks
 	* @access public
@@ -24,8 +25,8 @@ class WPISPConfig_Settings {
 	* @since 1.0.0
 	*/
 	public static function hooks() {
-		self::$setting_page = 'ispconfig_settings';
-		self::$setting_id = 'ispconfig_settings_id';
+		self::$setting_page = 'ispconfig_defaultvalues';
+		self::$setting_id = 'wpematico_exporter_settings_id';
 		if ( is_admin() ){ // admin actions
 			add_action('admin_init', array(__CLASS__, 'register_settings') );
 			add_action('admin_menu', array(__CLASS__, 'settings_menu') );
@@ -78,29 +79,19 @@ class WPISPConfig_Settings {
 	
 	public static function get_option() {
 		if (is_null(self::$options)) {
-			self::$options = self::sanitize_option(get_option( WPISPConfig::OPTION_KEY, array() ) );
+			self::$options = self::sanitize_option(get_option( self::OPTION_KEY, array() ) );
 		}
 		return self::$options;
 	}
 
 	public static function settings_menu() {
-		/*
-		$page = add_menu_page( 
-	        __( 'WP-ISPConfig', 'wpispconfig' ),
-	         __( 'WP-ISPConfig', 'wpispconfig' ),
-	        'manage_options',
-	        'ispconfig_settings',
-	        array(__CLASS__, 'settings_page'),
-	       	WPISPCONFIG_PLUGIN_URL . 'assets/images/prou.png',
-	        3
-	    );
-		*/
+		
 	    $page = add_submenu_page( 
-	    	'ispconfig_dashboard', 
-	    	 __( 'Settings', 'wpispconfig' ),
-	    	 __( 'Settings', 'wpispconfig' ),
+	    	null, 
+	    	 __( 'Defaul Values', 'wpispconfig' ),
+	    	 __( 'Default Values', 'wpispconfig' ),
     		'manage_options', 
-    		'ispconfig_settings',
+    		'ispconfig_defaultvalues',
     		array(__CLASS__, 'settings_page')
     	); 
 	
@@ -111,127 +102,62 @@ class WPISPConfig_Settings {
 
 	public static function register_settings() { // whitelist options
 																			  
-		register_setting( self::$setting_id, WPISPConfig::OPTION_KEY, array(__CLASS__, 'sanitize_option')); 
+		register_setting( self::$setting_id, self::OPTION_KEY, array(__CLASS__, 'sanitize_option')); 
 
 		add_settings_section(
-            'wpispconfig_settings_general', // ID
+            'wpispconfig_defaultvalues_settings', // ID
             '', // Title
             array(__CLASS__, 'section_empty' ), // Callback
-            'wpispconfig_settings_general' // Page
+            'wpispconfig_defaultvalues_settings' // Page
         );  
 
 
         add_settings_field(
-            'soapusername', // ID
-            __('Remote Username:', 'wpispconfig'), // Title 
+            'client_ip', // ID
+            __('Client IP:', 'wpispconfig'), // Title 
             array(__CLASS__, 'settings_input' ), // Callback
-            'wpispconfig_settings_general', // Page
-            'wpispconfig_settings_general', // Section
+            'wpispconfig_defaultvalues_settings', // Page
+            'wpispconfig_defaultvalues_settings', // Section
             array( 
-            	'option_name' => WPISPConfig::OPTION_KEY,
-            	'option_id' => 'soapusername',
+            	'option_name' => self::OPTION_KEY,
+            	'option_id' => 'client_ip',
                 'option_class' => 'regular-text',
-            	'label_for' => WPISPConfig::OPTION_KEY . '_' . 'soapusername',
-            	
-            )     
-        ); 
-        add_settings_field(
-            'soappassword', // ID
-            __('Remote Password:', 'wpispconfig'), // Title 
-            array(__CLASS__, 'settings_input' ), // Callback
-            'wpispconfig_settings_general', // Page
-            'wpispconfig_settings_general', // Section
-            array( 
-            	'option_name' => WPISPConfig::OPTION_KEY,
-            	'option_id' => 'soappassword',
-                'option_class' => 'regular-text',
-            	'label_for' => WPISPConfig::OPTION_KEY . '_' . 'soappassword',
-            	'input_type' => 'password',
+            	'label_for' => self::OPTION_KEY . '_' . 'client_ip',
             	
             )     
         ); 
 
         add_settings_field(
-       		'remote_type', 
-       		__('Select type:', 'wpispconfig'), 
-       		array(__CLASS__, 'settings_input' ),
-       		'wpispconfig_settings_general', 
-       		'wpispconfig_settings_general',
-       		array( 
-            	'option_name' => WPISPConfig::OPTION_KEY,
-            	'option_id' 	=> 'remote_type',
-            	'label_for' 	=> WPISPConfig::OPTION_KEY . '_' . 'remote_type',
-            	'input_type' 	=> 'radio', 
-            	'radios'		=> array('restapi' => 'Rest Api', 'soap' => 'Soap'),
-  				'option_class'	=> 'settings-api-type',
-            ) 
-       	);
-       
-       	
-       	add_settings_field(
-            'soap_location', // ID
-            __('Soap Location:', 'wpispconfig'), // Title 
+            'ns1', // ID
+            __('NameServer 1:', 'wpispconfig'), // Title 
             array(__CLASS__, 'settings_input' ), // Callback
-            'wpispconfig_settings_general', // Page
-            'wpispconfig_settings_general', // Section
+            'wpispconfig_defaultvalues_settings', // Page
+            'wpispconfig_defaultvalues_settings', // Section
             array( 
-            	'option_name' => WPISPConfig::OPTION_KEY,
-            	'option_id' => 'soap_location',
+            	'option_name' => self::OPTION_KEY,
+            	'option_id' => 'ns1',
                 'option_class' => 'regular-text',
-            	'label_for' => WPISPConfig::OPTION_KEY . '_' . 'soap_location',
-            
+            	'label_for' => self::OPTION_KEY . '_' . 'ns1',
+            	
             )     
         ); 
 
         add_settings_field(
-            'restapi_location', // ID
-            __('Rest Api Location:', 'wpispconfig'), // Title 
+            'ns2', // ID
+            __('NameServer 2:', 'wpispconfig'), // Title 
             array(__CLASS__, 'settings_input' ), // Callback
-            'wpispconfig_settings_general', // Page
-            'wpispconfig_settings_general', // Section
+            'wpispconfig_defaultvalues_settings', // Page
+            'wpispconfig_defaultvalues_settings', // Section
             array( 
-            	'option_name' => WPISPConfig::OPTION_KEY,
-            	'option_id' => 'restapi_location',
+            	'option_name' => self::OPTION_KEY,
+            	'option_id' => 'ns2',
                 'option_class' => 'regular-text',
-            	'label_for' => WPISPConfig::OPTION_KEY . '_' . 'restapi_location',
-            
-            )     
-        );
-       	
-
-        add_settings_field(
-            'soap_uri', // ID
-            __('Remote URI:', 'wpispconfig'), // Title 
-            array(__CLASS__, 'settings_input' ), // Callback
-            'wpispconfig_settings_general', // Page
-            'wpispconfig_settings_general', // Section
-            array( 
-            	'option_name' => WPISPConfig::OPTION_KEY,
-            	'option_id' => 'soap_uri',
-                'option_class' => 'regular-text',
-            	'label_for' => WPISPConfig::OPTION_KEY . '_' . 'soap_uri',
-            
+            	'label_for' => self::OPTION_KEY . '_' . 'ns2',
+            	
             )     
         ); 
-         add_settings_field(
-            'skip_ssl', // ID
-            __('Skip certificate check:', 'wpispconfig'), // Title 
-            array(__CLASS__, 'settings_input' ), // Callback
-            'wpispconfig_settings_general', // Page
-            'wpispconfig_settings_general', // Section
-            array( 
-            	'option_name' => WPISPConfig::OPTION_KEY,
-            	'option_id' => 'skip_ssl',
-                'option_class' => 'regular-text',
-            	'label_for' => WPISPConfig::OPTION_KEY . '_' . 'skip_ssl',
-            	'input_type' => 'checkbox', 
-            	'label_text' => '',
-            )     
-        ); 
+        
 		
-         
-
-		   
 	}
 
 	
@@ -292,22 +218,13 @@ class WPISPConfig_Settings {
      */
     public static function sanitize_option( $input ) {
         $new_input = array();
-        
 
-        $new_input['soapusername'] = ( !empty( $input['soapusername'] ) ? $input['soapusername']  : 'remote_user' );
-		$new_input['soappassword'] = ( !empty( $input['soappassword'] ) ? $input['soappassword']  : 'remote_user_pass' );
-   
-       	$new_input['soap_location'] = ( !empty( $input['soap_location'] ) ? $input['soap_location']  : 'https://localhost:8080/remote/index.php' );
-
-       	$new_input['soap_uri'] = ( !empty( $input['soap_uri'] ) ? $input['soap_uri']  : 'http://localhost:8080/remote/' );
-
-       	$new_input['skip_ssl'] = ( isset( $input['skip_ssl'] ) ? absint( $input['skip_ssl'] ) : 0 );
-
-       	$new_input['remote_type'] = ( !empty( $input['remote_type'] ) ? $input['remote_type']  : 'soap' );
-       
-       	$new_input['restapi_location'] = ( !empty( $input['restapi_location'] ) ? $input['restapi_location']  : 'https://localhost:8080/remote/json.php' );
-
-       
+        $new_input['client_ip'] = ( !empty( $input['client_ip'] ) ? $input['client_ip']  : (!empty($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : '') );
+		
+		$new_input['ns1'] = ( !empty( $input['ns1'] ) ? $input['ns1']  : (!empty($_SERVER['SERVER_NAME']) ? 'ns1.' .$_SERVER['SERVER_NAME'] : '') );
+		
+		$new_input['ns2'] = ( !empty( $input['ns2'] ) ? $input['ns2']  : (!empty($_SERVER['SERVER_NAME']) ? 'ns2.' . $_SERVER['SERVER_NAME'] : '') );
+	
         return $new_input;
     }
 
@@ -327,8 +244,8 @@ class WPISPConfig_Settings {
         wpispconfig_get_settings_tabs();
         settings_errors(); 
         ?>
-		<h2><?php _e('ISPConfig settings', 'wpispconfig'); ?></h2>
-		<form name="wpispconfig-settings" method="post" autocomplete="off" action="options.php">
+		<h2><?php _e('ISPConfig Default Values', 'wpispconfig'); ?></h2>
+		<form name="wpispconfig-default-values" method="post" autocomplete="off" action="options.php">
 			<?php
 			settings_fields( self::$setting_id );
 			
@@ -369,18 +286,13 @@ class WPISPConfig_Settings {
 								<span class="screen-reader-text"><?php _e('Click to toggle'); ?></span>
 								<span class="toggle-indicator" aria-hidden="true"></span>
 							</button>
-							<h3 class="hndle"><span class="dashicons dashicons-admin-tools"></span> <span><?php _e('General Settings', 'wpispconfig'); ?></span></h3>
+							<h3 class="hndle"><span class="dashicons dashicons-admin-tools"></span> <span><?php _e('Default Values', 'wpispconfig'); ?></span></h3>
 							<div class="inside">
 								<p></p>
 								<?php
-									do_settings_sections( 'wpispconfig_settings_general' );
+									do_settings_sections( 'wpispconfig_defaultvalues_settings' );
 								?>
-								<button class="button" type="button" id="btn-test-connection"><?php _e('Test connection', 'wpispconfig'); ?></button>
-								<div id="test-connection-div" style="display: none;">
-									<span class="spinner"></span>
-									<p id="test-connection-message"><?php _e('Loading...', 'wpispconfig'); ?></p></div>
-								<p></p>
-							
+								
 							</div>
 						</div>
 
@@ -407,4 +319,4 @@ class WPISPConfig_Settings {
 	
 }
 endif;  //class_exists
-WPISPConfig_Settings::hooks();
+WPISPConfig_DefaultValues::hooks();

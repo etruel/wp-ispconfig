@@ -43,13 +43,17 @@ class RestApiISPConfig {
         );
         if ( is_wp_error( $response ) ) {
             throw new Exception($response->get_error_message(), 1);
-        } 
+        }
+        if ($method == 'dns_templatezone_add') {
+            error_log($response['body']);
+        }
+       
         $res = json_decode($response['body'], true);
 
         if (isset($res['code'])) {
             if ($res['code'] != 'ok') {
                 $error_message = (!empty($res['message']) ? $res['message'] : 'An error has been ocurred!');
-                throw new Exception($error_message, 1);
+                throw new Exception($method . ': ' . $error_message, 1);
             }
         }
         return $res['response'];
@@ -96,81 +100,23 @@ class RestApiISPConfig {
     }
 
     public function add_client($options = array(), $reseller_id = 0){
-        $default_options = array(
-            'company_name' => '',
-            'contact_name' => '',
-            'customer_no' => '',
-            'vat_id' => '',
-            'street' => '',
-            'zip' => '',
-            'city' => '',
-            'state' => '',
-            'country' => 'EN',
-            'telephone' => '',
-            'mobile' => '',
-            'fax' => '',
-            'email' => '',
-            'internet' => '',
-            'icq' => '',
-            'notes' => '',
-            'default_mailserver' => 1,
-            'limit_maildomain' => -1,
-            'limit_mailbox' => -1,
-            'limit_mailalias' => -1,
-            'limit_mailaliasdomain' => -1,
-            'limit_mailforward' => -1,
-            'limit_mailcatchall' => -1,
-            'limit_mailrouting' => 0,
-            'limit_mailfilter' => -1,
-            'limit_fetchmail' => -1,
-            'limit_mailquota' => -1,
-            'limit_spamfilter_wblist' => 0,
-            'limit_spamfilter_user' => 0,
-            'limit_spamfilter_policy' => 1,
-            'default_webserver' => 1,
-            'limit_web_ip' => '',
-            'limit_web_domain' => -1,
-            'limit_web_quota' => -1,
-            'web_php_options' => 'no,fast-cgi,cgi,mod,suphp',
-            'limit_web_subdomain' => -1,
-            'limit_web_aliasdomain' => -1,
-            'limit_ftp_user' => -1,
-            'limit_shell_user' => 0,
-            'ssh_chroot' => 'no,jailkit,ssh-chroot',
-            'limit_webdav_user' => 0,
-            'default_dnsserver' => 1,
-            'limit_dns_zone' => -1,
-            'limit_dns_slave_zone' => -1,
-            'limit_dns_record' => -1,
-            'default_dbserver' => 1,
-            'limit_database' => -1,
-            'limit_cron' => 0,
-            'limit_cron_type' => 'url',
-            'limit_cron_frequency' => 5,
-            'limit_traffic_quota' => -1,
-            'username' => '',
-            'password' => '',
-            'language' => 'en',
-            'usertheme' => 'default',
-            'template_master' => 0,
-            'template_additional' => '',
-            'created_at' => 0
-        );
-      
+        
+        $default_options = wpispconfig_default_options_add_client();
+
         $new_options = wp_parse_args($options, $default_options);
 
         if (empty($new_options['username'])) {
-            throw new Exception("Error missing or invalid username");
+            throw new Exception("add_client: Error missing or invalid username");
         }
         if (empty($new_options['password'])) {
-            throw new Exception("Error missing or invalid username");
+            throw new Exception("add_client: Error missing or invalid username");
         }
         if (empty($new_options['password'])) {
-            throw new Exception("Error missing email");
+            throw new Exception("add_client: Error missing email");
         }
 
         if (!is_email($new_options['email'])) {
-            throw new Exception("Error invalid email");
+            throw new Exception("add_client: Error invalid email");
         }
         $params_api = array(
             'session_id'    => $this->session_id,
@@ -182,73 +128,21 @@ class RestApiISPConfig {
     }
 
     public function dns_templatezone_add($options = array() ) {
-         $default_options = array(
-            'client_id' => '',
-            'template_id' => '1',
-            'domain' => '',
-            'ip' => '',
-            'ns1' => '',
-            'ns2' => '',
-            'email' => '',
-        );
+         
+        $default_options = wpispconfig_default_options_dns_templatezone_add();
         $new_options = wp_parse_args($options, $default_options);
 
         $params_api = array(
             'session_id'    => $this->session_id,
         );
         $params_api = wp_parse_args($params_api, $new_options);
+        error_log(var_export($params_api, true));
         return $this->request('dns_templatezone_add', $params_api);
     }
 
     public function add_website( $client_id = 0, $options = array() ){
-        $default_options = array(
-            'server_id' => '1',
-            'domain' => '',
-            'ip_address' => '*',
-            'http_port' => '80',
-            'https_port' => '443',
-            'type' => 'vhost',
-            'parent_domain_id' => 0,
-            'vhost_type' => '',
-            'hd_quota' => -1,
-            'traffic_quota' => -1,
-            'cgi' => 'n',
-            'ssi' => 'n',
-            'suexec' => 'n',
-            'errordocs' => 1,
-            'is_subdomainwww' => 1,
-            'subdomain' => 'www',
-            'php' => 'php-fpm', 
-            'php_fpm_use_socket' => 'y',
-            'ruby' => 'n', 
-            'redirect_type' => '',
-            'redirect_path' => '',
-            'ssl' => 'n',
-            'ssl_state' => '',
-            'ssl_locality' => '',
-            'ssl_organisation' => '',
-            'ssl_organisation_unit' => '',
-            'ssl_country' => '',
-            'ssl_domain' => '',
-            'ssl_request' => '',
-            'ssl_cert' => '',
-            'ssl_bundle' => '',
-            'ssl_action' => '',
-            'stats_password' => '',
-            'stats_type' => 'webalizer',
-            'allow_override' => 'All',
-            'apache_directives' => '',
-            'php_open_basedir' => '/', 
-            'custom_php_ini' => '', 
-            'backup_interval' => '',
-            'backup_copies' => 1,
-            'active' => 'y',
-            'traffic_quota_lock' => 'n',
-            'pm' => 'dynamic',
-            'pm_process_idle_timeout'=>10,
-            'pm_max_requests' => 0,
-            'read_only' => false
-        );
+
+        $default_options = wpispconfig_default_options_add_website();
         
         $new_options = wp_parse_args($options, $default_options);
         $params_api = array(
@@ -262,25 +156,11 @@ class RestApiISPConfig {
     }
 
     public function sites_ftp_user_add( $client_id = 0, $domain_id = 0, $options = array() ){
-        $default_options = array(
-            'server_id'         => '1',
-            'parent_domain_id'  => $domain_id,
-            'username'          => '',
-            'password'          => '',
-            'quota_size'        => -1,
-            'active'            => 'y',
-            'uid'               => 'web'.$domain_id,
-            'gid'               => 'client'.$client_id,
-            'dir'               => '/var/www/clients/client'. $client_id .'/web' . $domain_id,
-            'quota_files'       => -1,
-            'ul_ratio'          => -1,
-            'dl_ratio'          => -1,
-            'ul_bandwidth'      => -1,
-            'dl_bandwidth'      => -1
-        );
         
-       $new_options = wp_parse_args($options, $default_options);
-       $params_api = array(
+        $default_options = wpispconfig_default_options_sites_ftp_user_add($client_id, $domain_id);
+    
+        $new_options = wp_parse_args($options, $default_options);
+        $params_api = array(
             'session_id'    => $this->session_id,
             'client_id'     => $client_id,
             'params'        => $new_options,
@@ -290,14 +170,11 @@ class RestApiISPConfig {
     }
     
     public function sites_database_user_add( $client_id = 0, $options = array() ){
-        $default_options = array(
-            'server_id'         => '1',
-            'database_user'     => '',
-            'database_password' => '',
-        );
+
+        $default_options = wpispconfig_default_options_sites_database_user_add();
         
-       $new_options = wp_parse_args($options, $default_options);
-       $params_api = array(
+        $new_options = wp_parse_args($options, $default_options);
+        $params_api = array(
             'session_id'    => $this->session_id,
             'client_id'     => $client_id,
             'params'        => $new_options,
@@ -307,14 +184,11 @@ class RestApiISPConfig {
     }
 
     public function mail_domain_add( $client_id = 0, $options = array() ){
-        $default_options = array(
-            'server_id' => '1',
-            'domain' => '',
-            'active' => 'y'
-        );
+
+        $default_options = wpispconfig_default_options_mail_domain_add();
         
-       $new_options = wp_parse_args($options, $default_options);
-       $params_api = array(
+        $new_options = wp_parse_args($options, $default_options);
+        $params_api = array(
             'session_id'    => $this->session_id,
             'client_id'     => $client_id,
             'params'        => $new_options,
@@ -324,34 +198,11 @@ class RestApiISPConfig {
     }
 
      public function mail_user_add( $client_id = 0, $options = array() ){
-        $default_options = array(
-            'server_id' => '1',
-            'email' => '',
-            'login' => '',
-            'password' => '',
-            'name' => '',
-            'uid' => 5000,
-            'gid' => 5000,
-            'maildir' => '/var/vmail/'. time(true) . '-'. rand(1, 1234) .'/'. time(true) . '-'. rand(1, 1234),
-            'quota' => 524288000,
-            'cc' => '',
-            'homedir' => '/var/vmail',
-            'autoresponder' => 'n',
-            'autoresponder_start_date' => '',
-            'autoresponder_end_date' => '',
-            'autoresponder_text' => '',
-            'move_junk' => 'n',
-            'custom_mailfilter' => '',
-            'postfix' => 'y',
-            'access' => 'n',
-            'disableimap' => 'n',
-            'disablepop3' => 'n',
-            'disabledeliver' => 'n',
-            'disablesmtp' => 'n',
-        );
+        
+        $default_options = wpispconfig_default_options_mail_user_add();
          
-       $new_options = wp_parse_args($options, $default_options); 
-       $params_api = array(
+        $new_options = wp_parse_args($options, $default_options); 
+        $params_api = array(
             'session_id'    => $this->session_id,
             'client_id'     => $client_id,
             'params'        => $new_options,
@@ -395,53 +246,11 @@ class RestApiISPConfig {
     }
         
     public function sites_web_aliasdomain_add($client_id, $options = array()) {
-        $default_options = array(
-            'server_id' => '1',
-            'ip_address' => '*',
-            'domain' => '',
-            'type' => 'alias',
-            'parent_domain_id' => '',
-            'vhost_type' => '',
-            'document_root' => NULL,
-            'system_user' => NULL,
-            'system_group' => NULL,
-            'hd_quota' => 0,
-            'traffic_quota' => -1,
-            'cgi' => 'n',
-            'ssi' => 'n',
-            'suexec' => 'n',
-            'errordocs' => 1,
-            'is_subdomainwww' => 1,
-            'subdomain' => '',
-            'php' => 'mod',
-            'ruby' => 'n',
-            'redirect_type' => '',
-            'redirect_path' => '',
-            'ssl' => 'n',
-            'ssl_state' => '',
-            'ssl_locality' => '',
-            'ssl_organisation' => '',
-            'ssl_organisation_unit' => '',
-            'ssl_country' => '',
-            'ssl_domain' => '',
-            'ssl_request' => '',
-            'ssl_cert' => '',
-            'ssl_bundle' => '',
-            'ssl_action' => '',
-            'stats_password' => '',
-            'stats_type' => 'webalizer',
-            'allow_override' => 'All',
-            'apache_directives' => '',
-            'php_open_basedir' => '/',
-            'custom_php_ini' => '',
-            'backup_interval' => '',
-            'backup_copies' => 1,
-            'active' => 'y',
-            'traffic_quota_lock' => 'n'
-        );
+    
+        $default_options = wpispconfig_default_options_sites_web_aliasdomain_add();
          
-       $new_options = wp_parse_args($options, $default_options);
-       $params_api = array(
+        $new_options = wp_parse_args($options, $default_options);
+        $params_api = array(
             'session_id'    => $this->session_id,
             'client_id'     => $client_id,
             'params'        => $new_options,
