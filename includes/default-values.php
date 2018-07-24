@@ -30,51 +30,19 @@ class WPISPConfig_DefaultValues {
 		if ( is_admin() ){ // admin actions
 			add_action('admin_init', array(__CLASS__, 'register_settings') );
 			add_action('admin_menu', array(__CLASS__, 'settings_menu') );
+
+			add_filter('parent_file',  array( __CLASS__, 'tax_menu_correction'));
+			add_filter('submenu_file',  array( __CLASS__, 'tax_submenu_correction'));
 		}
-		add_action('wp_ajax_ispconfig_testconnection', array(__CLASS__, 'test_connection'));
 	}
 
-	public static function test_connection() {
-		$nonce = '';
-		if (isset($_REQUEST['_wpnonce'])) {
-			$nonce = $_REQUEST['_wpnonce'];
-		}
-		
-		if (!wp_verify_nonce($nonce, 'test-connection-settings')) {
-		    wp_die('Security check'); 
-		} 
-		$options = array();
-		if (isset($_REQUEST['options'])) {
-			parse_str($_REQUEST['options'], $options);
-		}
-		
-		try {
-
-			$api = wpispconfig_get_current_api($options['WPISPConfig_Options']);
-			
-		} catch (Exception $e) {
-			wp_die($e->getMessage());
-		}
-								
-		wp_die('connection-success');
-	}
+	
 
 	public static function add_styles() {
-		wp_enqueue_style('style-wpcispconfig-settings',WPISPCONFIG_PLUGIN_URL .'assets/css/settings.css', array(), WPISPCONFIG_VERSION);	
+		
 	}
 	public static function add_scripts() {
-		wp_enqueue_script( 'wpcispconfig-settings', WPISPCONFIG_PLUGIN_URL . 'assets/js/settings.js', array( 'jquery' ), WPISPCONFIG_VERSION, true );
-	
-		wp_localize_script('wpcispconfig-settings', 'settings_obj',
-				array(
-					'ajax_url' 			=> admin_url( 'admin-ajax.php' ),
-					'text_loading' 		=> __('Loading...', 'wpispconfig'),
-					'text_error_fail' 	=> __('An error has been occurred. Please check the compatibility with this plugin.', 'wpispconfig'),
-					'text_success' 		=> __('You have logged successfully.', 'wpispconfig'),
-					'nonce_test_con' 	=> wp_create_nonce('test-connection-settings'),
-
-				)
-			);
+		
 	}
 	
 	public static function get_option() {
@@ -98,6 +66,23 @@ class WPISPConfig_DefaultValues {
 		add_action( 'admin_print_styles-' . $page, array(__CLASS__, 'add_styles') );
 		add_action( 'admin_print_scripts-' . $page, array(__CLASS__, 'add_scripts') );
 
+	}
+	// highlight the proper top level menu
+	static function tax_menu_correction($parent_file) {
+		global $current_screen;
+		if ($current_screen->id == "admin_page_ispconfig_defaultvalues") {
+			$parent_file = 'ispconfig_dashboard';
+		}
+		return $parent_file;
+	}
+	
+	// highlight the proper sub level menu
+	static function tax_submenu_correction($submenu_file) {
+		global $current_screen;
+		if ($current_screen->id == "admin_page_ispconfig_defaultvalues") {
+			$submenu_file = 'ispconfig_settings';
+		}
+		return $submenu_file;
 	}
 
 	public static function register_settings() { // whitelist options
@@ -219,7 +204,7 @@ class WPISPConfig_DefaultValues {
     public static function sanitize_option( $input ) {
         $new_input = array();
 
-        $new_input['client_ip'] = ( !empty( $input['client_ip'] ) ? $input['client_ip']  : (!empty($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : '') );
+        $new_input['client_ip'] = ( !empty( $input['client_ip'] ) ? $input['client_ip']  : (!empty($_SERVER['SERVER_ADDR']) ? $_SERVER['SERVER_ADDR'] : '') );
 		
 		$new_input['ns1'] = ( !empty( $input['ns1'] ) ? $input['ns1']  : (!empty($_SERVER['SERVER_NAME']) ? 'ns1.' .$_SERVER['SERVER_NAME'] : '') );
 		
@@ -232,10 +217,11 @@ class WPISPConfig_DefaultValues {
          
     }
 	public static function settings_page() {
-		global $wp_settings_sections;
+		global $wp_settings_sections, $current_screen;
         if(!current_user_can('manage_options')) {
             wp_die(__('You do not have sufficient permissions to access this page.'));
         }
+        
         $options = self::get_option();
         ?>
 

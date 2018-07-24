@@ -316,9 +316,12 @@ class WPISPConfig_Settings {
     }
 	public static function settings_page() {
 		global $wp_settings_sections;
+
         if(!current_user_can('manage_options')) {
             wp_die(__('You do not have sufficient permissions to access this page.'));
         }
+
+        
         $options = self::get_option();
         ?>
 

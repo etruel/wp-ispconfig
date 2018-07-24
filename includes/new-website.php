@@ -67,10 +67,60 @@ class WPISPConfig_New_Website {
 			<?php
 				wp_nonce_field('ispconfig_allinone_save');
 			?>
+
+
 			<div id="poststuff">
-				<div id="post-body" class="metabox-holder columns-1">
-					
+				<div id="post-body" class="metabox-holder columns-2">
 					<div id="postbox-container-1" class="postbox-container">
+						<div id="side-sortables" class="meta-box-sortables ui-sortable">
+							<div id="wpem-about" class="postbox">
+								<button type="button" class="handlediv button-link" aria-expanded="true">
+									<span class="screen-reader-text"><?php _e('Click to toggle'); ?></span>
+									<span class="toggle-indicator" aria-hidden="true"></span>
+								</button>
+								<h2 style="background-color: #980b13; color: white;" class="hndle"><span class="dashicons dashicons-forms"></span> <?php _e('Create', 'wpispconfig'); ?></h2>
+								<div class="inside">
+									<p class="description"><?php _e('Select what you want to create on the website', 'wpispconfig'); ?></p>
+									<table class="form-table">
+										<tr>
+											<th scope="row">
+												<label for="create_ftp"><?php _e( 'FTP:', 'wpispconfig' ); ?></label>
+											</th>
+											<td>
+												<input type="checkbox" id="create_ftp" name="create[ftp]" value="1" checked="checked">
+											</td>
+										</tr>
+										<tr>
+											<th scope="row">
+												<label for="create_db"><?php _e( 'DB User:', 'wpispconfig' ); ?></label>
+											</th>
+											<td>
+												<input type="checkbox" id="create_db" name="create[db]" value="1" checked="checked">
+											</td>
+										</tr>
+										<tr>
+											<th scope="row">
+												<label for="create_dns"><?php _e( 'DNS:', 'wpispconfig' ); ?></label>
+											</th>
+											<td>
+												<input type="checkbox" id="create_dns" name="create[dns]" value="1" checked="checked">
+											</td>
+										</tr>
+										<tr>
+											<th scope="row">
+												<label for="create_email"><?php _e( 'Email:', 'wpispconfig' ); ?></label>
+											</th>
+											<td>
+												<input type="checkbox" id="create_email" name="create[email]" value="1" checked="checked">
+											</td>
+										</tr>
+									</table>					
+								</div>
+							</div>
+
+						</div>		<!-- #side-sortables -->
+					</div>		<!--  postbox-container-1 -->	
+					<div id="postbox-container-2" class="postbox-container">
 
 						<div id="all_in_one" class="postbox">
 							
@@ -88,7 +138,7 @@ class WPISPConfig_New_Website {
 										$servers = $api->server_get_all();
 
 									} catch (Exception $e) {
-										echo '<div class="notice notice-error">' .$e->getMessage() . '</div>';
+										echo '<div class="notice notice-error">' . sprintf(__('Failed to connect with ISPConfig API. Please check your <a href="%s">Settings</a> and test the connection:', 'wpispconfig'), admin_url('admin.php?page=ispconfig_settings'))  . '<strong> ' . $e->getMessage() . '</strong></div>';
 									}
 
 									do_action('wpispconfig_all_in_one_before_table', $api);
@@ -297,7 +347,7 @@ class WPISPConfig_New_Website {
 	}
 
 	
-	public static function create($array_values = array()) {
+	public static function create($array_values = array(), $creating = array()) {
 		$options = WPISPConfig_Settings::get_option();
 
 
@@ -317,12 +367,17 @@ class WPISPConfig_New_Website {
 		$values['ns2'] = (!empty($array_values['ns2']) ? $array_values['ns2'] : '');
 		$values['dns_email'] = str_replace('@', '.', $values['email']);
 
-		
+		$creating['ftp'] = (!empty($creating['ftp']) ? $creating['ftp'] : false);
+		$creating['db'] = (!empty($creating['db']) ? $creating['db'] : false);
+		$creating['dns'] = (!empty($creating['dns']) ? $creating['dns'] : false);
+		$creating['email'] = (!empty($creating['email']) ? $creating['email'] : false);
+
+		$creating = apply_filters('wpispconfig_new_website_creating_values', $creating, $values);
 
 		try {
 
 			$api = wpispconfig_get_current_api($options);
-			$values = apply_filters('wpispconfig_values_all_in_one_before_create', $values, $array_values, $api);	
+			$values = apply_filters('wpispconfig_values_all_in_one_before_create', $values, $array_values, $api, $creating);	
 
 			if (empty($values['client_id'])) {
 
@@ -338,8 +393,10 @@ class WPISPConfig_New_Website {
 				$values['client_id'] = $api->add_client( $new_client);
 			}
 			
+			$dns_zone = -1;
+			if ($creating['dns']) {
 
-			$new_dns_templatezone = array(
+				$new_dns_templatezone = array(
 					            'client_id' 	=> $values['client_id'],
 					            'template_id' 	=> $values['template_id'],
 					            'domain' 		=> $values['new_domain'],
@@ -348,7 +405,10 @@ class WPISPConfig_New_Website {
 					            'ns2' 			=> $values['ns2'],
 					            'email' 		=> $values['dns_email'],
 					        );
-	        $dns_zone = $api->dns_templatezone_add( $new_dns_templatezone );
+	       	 	$dns_zone = $api->dns_templatezone_add( $new_dns_templatezone );
+
+			}
+			
 
 	        $new_website = array(
 	        					'server_id'		 => $values['server_id'],
@@ -358,37 +418,55 @@ class WPISPConfig_New_Website {
 
 	        $domain_id = $api->add_website($values['client_id'], $new_website );
 
+
+	        $ftp_user_id = -1;
 	        $ftp_dir = '/var/www/clients/client'. $values['client_id'] .'/web' . $domain_id;
-	        $new_ftp = array(
-	        					'server_id'		=> $values['server_id'],
-					            'username' 		=> $values['username'],
-					            'password' 		=> $values['password'],
-					            'dir'           => $ftp_dir,
-					        );
+	        if ($creating['ftp']) {
+	        	
+		        $new_ftp = array(
+		        					'server_id'		=> $values['server_id'],
+						            'username' 		=> $values['username'],
+						            'password' 		=> $values['password'],
+						            'dir'           => $ftp_dir,
+						        );
 
-	        $ftp_user_id = $api->sites_ftp_user_add($values['client_id'], $domain_id, $new_ftp );
+		        $ftp_user_id = $api->sites_ftp_user_add($values['client_id'], $domain_id, $new_ftp );
 
-	        $new_database = array(
+	        }
+
+	        
+
+	        $database_user_id = -1;
+	        if ($creating['db']) {
+
+	        	$new_database = array(
 	        					'server_id'				=> $values['server_id'],
 					            'database_user' 		=> $values['username'],
 					            'database_password' 	=> $values['password'],
 					        );
 
-	        $database_user_id = $api->sites_database_user_add($values['client_id'], $new_database );
+	        	$database_user_id = $api->sites_database_user_add($values['client_id'], $new_database );
+	        }
+	        
+
 
 	        $api->mail_domain_add($values['client_id'], array( 'domain' => $values['new_domain']) );
 	        
+	        $email_id = -1;
 	        $new_email_address = $values['username'] . '@' . $values['new_domain'];
-	        $new_email_options = array(
-	        					'server_id'		=> $values['server_id'],
-					            'email' 		=> $new_email_address,
-					            'login' 		=> $new_email_address,
-					            'password' 		=> $values['password'],
-					            'name' 			=> $values['client_name'],
-					            'maildir'		=>  '/var/vmail/'. $values['new_domain'] .'/'.$values['username'],
-					        );
-	       $email_id = $api->mail_user_add($values['client_id'], $new_email_options);
-	        
+	        if ($creating['email']) {
+
+		        $new_email_options = array(
+		        					'server_id'		=> $values['server_id'],
+						            'email' 		=> $new_email_address,
+						            'login' 		=> $new_email_address,
+						            'password' 		=> $values['password'],
+						            'name' 			=> $values['client_name'],
+						            'maildir'		=>  '/var/vmail/'. $values['new_domain'] .'/'.$values['username'],
+						        );
+		       $email_id = $api->mail_user_add($values['client_id'], $new_email_options);
+		    }
+	        do_action('wpispconfig_new_website_finished', $values, $creating, $api);
 	        return array(
 	        	'server_id'			=> $values['server_id'],
 	        	'client_id' 		=> $values['client_id'], 
@@ -405,7 +483,7 @@ class WPISPConfig_New_Website {
 	        	'database_user_id'	=> $database_user_id,
 	        	'email_id'			=> $email_id,
 	        	'email_address'		=> $new_email_address,
-
+	        	'created'			=> $creating,
 	        );
 	        
 
@@ -422,7 +500,11 @@ class WPISPConfig_New_Website {
 		
 		try {
 
-			$created_values = self::create($_POST);
+			$create = array();
+			if (!empty($_POST['create'])) {
+				$create = $_POST['create'];
+			}
+			$created_values = self::create($_POST, $create);
 
 			$notices_success = array();
 
@@ -435,26 +517,32 @@ class WPISPConfig_New_Website {
 
 
 			$notices_success[] = '<strong>' . __( 'Server ID:', 'wpispconfig' ) .'</strong> '. $created_values['server_id'] .'<br/>';
-			$notices_success[] = '<strong>' . __( 'DNS Zones added from DNS template:', 'wpispconfig' ) .'</strong> '. $created_values['template_id'] .'<br/><br/>';
+			if ($created_values['created']['dns']) {
+				$notices_success[] = '<strong>' . __( 'DNS Zones added from DNS template:', 'wpispconfig' ) .'</strong> '. $created_values['template_id'] .'<br/><br/>';
+			}
+			
 
 			$notices_success[] = '<strong>' . __( 'Web Domain ID:', 'wpispconfig' ) .'</strong> '. $created_values['domain_id'] .'<br/>';
 			$notices_success[] = '<strong>' . __( 'Domain:', 'wpispconfig' ) .'</strong> '. $created_values['domain'] .'<br/><br/>';
 
-			$notices_success[] = '<strong>' . __( 'FTP User ID:', 'wpispconfig' ) .'</strong> '. $created_values['ftp_user_id'] .'<br/>';
-			$notices_success[] = '<strong>' . __( 'FTP domain:', 'wpispconfig' ) .'</strong> '. $created_values['domain'] .'<br/>';
-			$notices_success[] = '<strong>' . __( 'FTP User:', 'wpispconfig' ) .'</strong> '. $created_values['username'] .'<br/>';
-			$notices_success[] = '<strong>' . __( 'FTP Pass:', 'wpispconfig' ) .'</strong> '. $created_values['password'] .'<br/>';
-			$notices_success[] = '<strong>' . __( 'FTP dir:', 'wpispconfig' ) .'</strong> '. $created_values['ftp_dir'] .'<br/><br/>';
-
-			$notices_success[] = '<strong>' . __( 'Database User ID:', 'wpispconfig' ) .'</strong> '. $created_values['database_user_id'].'<br/>';
-			$notices_success[] = '<strong>' . __( 'Database User:', 'wpispconfig' ) .'</strong> '. $created_values['username'] .'<br/>';
-			$notices_success[] = '<strong>' . __( 'Database Pass:', 'wpispconfig' ) .'</strong> '. $created_values['password'] .'<br/>';
-			$notices_success[] = '<strong>' . __( 'You must create Databases', 'wpispconfig' ) .'</strong> <br/><br/>';
-
-			$notices_success[] = '<strong>' . __( 'New email ID:', 'wpispconfig' ) .'</strong> '. $created_values['email_id'] .'<br/>';
-			$notices_success[] = '<strong>' . __( 'New e-mail account:', 'wpispconfig' ) .'</strong> '. $created_values['email_address'] .'<br/>';
-			$notices_success[] = '<strong>' . __( 'Password:', 'wpispconfig' ) .'</strong> '. $created_values['password'] .'<br/>';
-
+			if ($created_values['created']['ftp']) {
+				$notices_success[] = '<strong>' . __( 'FTP User ID:', 'wpispconfig' ) .'</strong> '. $created_values['ftp_user_id'] .'<br/>';
+				$notices_success[] = '<strong>' . __( 'FTP domain:', 'wpispconfig' ) .'</strong> '. $created_values['domain'] .'<br/>';
+				$notices_success[] = '<strong>' . __( 'FTP User:', 'wpispconfig' ) .'</strong> '. $created_values['username'] .'<br/>';
+				$notices_success[] = '<strong>' . __( 'FTP Pass:', 'wpispconfig' ) .'</strong> '. $created_values['password'] .'<br/>';
+				$notices_success[] = '<strong>' . __( 'FTP dir:', 'wpispconfig' ) .'</strong> '. $created_values['ftp_dir'] .'<br/><br/>';
+			}
+			if ($created_values['created']['db']) {
+				$notices_success[] = '<strong>' . __( 'Database User ID:', 'wpispconfig' ) .'</strong> '. $created_values['database_user_id'].'<br/>';
+				$notices_success[] = '<strong>' . __( 'Database User:', 'wpispconfig' ) .'</strong> '. $created_values['username'] .'<br/>';
+				$notices_success[] = '<strong>' . __( 'Database Pass:', 'wpispconfig' ) .'</strong> '. $created_values['password'] .'<br/>';
+				$notices_success[] = '<strong>' . __( 'You must create Databases', 'wpispconfig' ) .'</strong> <br/><br/>';
+			}
+			if ($created_values['created']['email']) {
+				$notices_success[] = '<strong>' . __( 'New email ID:', 'wpispconfig' ) .'</strong> '. $created_values['email_id'] .'<br/>';
+				$notices_success[] = '<strong>' . __( 'New e-mail account:', 'wpispconfig' ) .'</strong> '. $created_values['email_address'] .'<br/>';
+				$notices_success[] = '<strong>' . __( 'Password:', 'wpispconfig' ) .'</strong> '. $created_values['password'] .'<br/>';
+			}
 			$notices_success = apply_filters('wpispconfig_all_in_one_success_notices', $notices_success, $created_values);
 
 			$sucess_notice = implode('', $notices_success);

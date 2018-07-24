@@ -23,7 +23,6 @@ class WPISPConfig_Dashboard {
 	public static function hooks() {
 
 		if ( is_admin() ){ // admin actions
-			//add_action('admin_init', array(__CLASS__, 'register_settings') );
 			add_action('admin_menu', array(__CLASS__, 'settings_menu') );
 		}
 		
@@ -31,25 +30,10 @@ class WPISPConfig_Dashboard {
 
 
 	public static function add_styles() {
-		/*
-		wp_enqueue_style('style-wpcispconfig-settings',WPISPCONFIG_PLUGIN_URL .'assets/css/settings.css', array(), WPISPCONFIG_VERSION);	
-		*/
+		
 	}
 	public static function add_scripts() {
-		/*
-		wp_enqueue_script( 'wpcispconfig-settings', WPISPCONFIG_PLUGIN_URL . 'assets/js/settings.js', array( 'jquery' ), WPISPCONFIG_VERSION, true );
-	
-		wp_localize_script('wpcispconfig-settings', 'settings_obj',
-				array(
-					'ajax_url' 			=> admin_url( 'admin-ajax.php' ),
-					'text_loading' 		=> __('Loading...', 'wpispconfig'),
-					'text_error_fail' 	=> __('An error has been occurred. Please check the compatibility with this plugin.', 'wpispconfig'),
-					'text_success' 		=> __('You have logged successfully.', 'wpispconfig'),
-					'nonce_test_con' 	=> wp_create_nonce('test-connection-settings'),
-
-				)
-			);
-			*/
+		
 	}
 	
 
@@ -114,25 +98,35 @@ class WPISPConfig_Dashboard {
 							</button>
 							<h3 class="hndle"><span class="dashicons dashicons-list-view"></span> <span><?php _e('Website Harddisk Quota', 'wpispconfig'); ?></span></h3>
 							<div class="inside">
-								<table class="wp-list-table widefat fixed striped posts">
 
-									<?php
+								<?php
+									$results = array();
 									$options = WPISPConfig_Settings::get_option(); 
 										try {
 											$api = wpispconfig_get_current_api($options);
 											$clients = $api->client_get_all();
 											foreach ($clients as $key => $client_id) {
 												$sys_groupid = $api->client_get_groupid($client_id);
-												$results = $api->sites_web_domain_get(array('sys_groupid' => $sys_groupid ));
-												//$result_quotas = $api->get_ftptrafficquota_data();
-												foreach ($results as $key => $value) {
-													echo '<tr><td>' . $value['domain'] . '</td><td>' . ($value['hd_quota'] == '-1' ? __('Unlimited', 'wpispconfig') : $value['hd_quota']. ' KB')  .  '</td></tr>';
-												}
+												$new_websites = $api->sites_web_domain_get(array('sys_groupid' => $sys_groupid ));
+												$results = array_merge($new_websites, $results);
+												
 											}
 										} catch (Exception $e) {
-											echo '<div class="notice notice-error">' .$e->getMessage() . '</div>';
+											echo '<div class="notice notice-error">' . sprintf(__('Failed to connect with ISPConfig API. Please check your <a href="%s">Settings</a> and test the connection:', 'wpispconfig'), admin_url('admin.php?page=ispconfig_settings'))  . '<strong> ' . $e->getMessage() . '</strong></div>';
 										}
 									?>
+								<table class="wp-list-table widefat fixed striped posts">
+									<?php 
+										if (!empty($results)) {
+											foreach ($results as $key => $value) {
+												echo '<tr><td>' . $value['domain'] . '</td><td>' . ($value['hd_quota'] == '-1' ? __('Unlimited', 'wpispconfig') : $value['hd_quota']. ' KB')  .  '</td></tr>';
+											}
+										} else {
+											echo '<tr><td>' . __('There are not websites to show.', 'wpispconfig') . '</td></tr>';
+										}
+
+									?>
+									
 
 								</table>
 								<p></p>

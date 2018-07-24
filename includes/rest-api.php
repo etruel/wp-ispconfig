@@ -44,9 +44,6 @@ class RestApiISPConfig {
         if ( is_wp_error( $response ) ) {
             throw new Exception($response->get_error_message(), 1);
         }
-        if ($method == 'dns_templatezone_add') {
-            error_log($response['body']);
-        }
        
         $res = json_decode($response['body'], true);
 
@@ -136,7 +133,6 @@ class RestApiISPConfig {
             'session_id'    => $this->session_id,
         );
         $params_api = wp_parse_args($params_api, $new_options);
-        error_log(var_export($params_api, true));
         return $this->request('dns_templatezone_add', $params_api);
     }
 

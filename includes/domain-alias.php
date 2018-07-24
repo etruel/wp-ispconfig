@@ -133,7 +133,7 @@ class WPISPConfig_Domain_Alias {
 										$servers = $api->server_get_all();
 										$template_dns = $api->dns_templatezone_get_all();
 									} catch (Exception $e) {
-										echo '<div class="notice notice-error">' .$e->getMessage() . '</div>';
+										echo '<div class="notice notice-error">' . sprintf(__('Failed to connect with ISPConfig API. Please check your <a href="%s">Settings</a> and test the connection:', 'wpispconfig'), admin_url('admin.php?page=ispconfig_settings'))  . '<strong> ' . $e->getMessage() . '</strong></div>';
 									}
 
 									
