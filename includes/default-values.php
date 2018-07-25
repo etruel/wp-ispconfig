@@ -31,9 +31,10 @@ class WPISPConfig_DefaultValues {
 			add_action('admin_init', array(__CLASS__, 'register_settings') );
 			add_action('admin_menu', array(__CLASS__, 'settings_menu') );
 
-			add_filter('parent_file',  array( __CLASS__, 'tax_menu_correction'));
-			add_filter('submenu_file',  array( __CLASS__, 'tax_submenu_correction'));
+			
 		}
+		add_filter('parent_file',  array( __CLASS__, 'tax_menu_correction'));
+		add_filter('submenu_file',  array( __CLASS__, 'tax_submenu_correction'));
 	}
 
 	
@@ -78,9 +79,10 @@ class WPISPConfig_DefaultValues {
 	
 	// highlight the proper sub level menu
 	static function tax_submenu_correction($submenu_file) {
-		global $current_screen;
+		global $current_screen, $plugin_page;
 		if ($current_screen->id == "admin_page_ispconfig_defaultvalues") {
 			$submenu_file = 'ispconfig_settings';
+			$plugin_page = 'ispconfig_settings';
 		}
 		return $submenu_file;
 	}
