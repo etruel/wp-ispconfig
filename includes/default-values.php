@@ -113,6 +113,21 @@ class WPISPConfig_DefaultValues {
         ); 
 
         add_settings_field(
+            'email', // ID
+            __('Email:', 'wpispconfig'), // Title 
+            array(__CLASS__, 'settings_input' ), // Callback
+            'wpispconfig_defaultvalues_settings', // Page
+            'wpispconfig_defaultvalues_settings', // Section
+            array( 
+            	'option_name' => self::OPTION_KEY,
+            	'option_id' => 'email',
+                'option_class' => 'regular-text',
+            	'label_for' => self::OPTION_KEY . '_' . 'email',
+            	
+            )     
+        );
+
+        add_settings_field(
             'ns1', // ID
             __('NameServer 1:', 'wpispconfig'), // Title 
             array(__CLASS__, 'settings_input' ), // Callback
@@ -206,6 +221,9 @@ class WPISPConfig_DefaultValues {
 
         $new_input['client_ip'] = ( !empty( $input['client_ip'] ) ? $input['client_ip']  : (!empty($_SERVER['SERVER_ADDR']) ? $_SERVER['SERVER_ADDR'] : '') );
 		
+		$new_input['email'] = ( !empty( $input['email'] ) ? $input['email']  : (!empty( get_bloginfo('admin_email') ) ? get_bloginfo('admin_email') : '') );
+        
+
 		$new_input['ns1'] = ( !empty( $input['ns1'] ) ? $input['ns1']  : (!empty($_SERVER['SERVER_NAME']) ? 'ns1.' .$_SERVER['SERVER_NAME'] : '') );
 		
 		$new_input['ns2'] = ( !empty( $input['ns2'] ) ? $input['ns2']  : (!empty($_SERVER['SERVER_NAME']) ? 'ns2.' . $_SERVER['SERVER_NAME'] : '') );

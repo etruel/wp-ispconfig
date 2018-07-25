@@ -167,7 +167,7 @@ class WPISPConfig_New_Website {
 											<label for="email"><?php _e( 'Email:', 'wpispconfig' ); ?></label>
 										</th>
 										<td>
-											<input class="regular-text" type="text" id="email" name="email" value="">
+											<input class="regular-text" type="text" id="email" name="email" value="<?php echo $default_values['email'] ?>">
 										</td>
 									</tr>
 									<tr>
