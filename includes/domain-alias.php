@@ -100,6 +100,7 @@ class WPISPConfig_Domain_Alias {
 		$client_data = array();
 		$servers = array();
 		$template_dns = array();
+		$default_values = WPISPConfig_DefaultValues::get_option();
         ?>
 
         <div class="wrap">
@@ -132,6 +133,7 @@ class WPISPConfig_Domain_Alias {
 										}
 										$servers = $api->server_get_all();
 										$template_dns = $api->dns_templatezone_get_all();
+
 									} catch (Exception $e) {
 										echo '<div class="notice notice-error">' . sprintf(__('Failed to connect with ISPConfig API. Please check your <a href="%s">Settings</a> and test the connection:', 'wpispconfig'), admin_url('admin.php?page=ispconfig_settings'))  . '<strong> ' . $e->getMessage() . '</strong></div>';
 									}
@@ -221,7 +223,7 @@ class WPISPConfig_Domain_Alias {
 											<label for="client_ip"><?php _e( 'Client IP:', 'wpispconfig' ); ?></label>
 										</th>
 										<td>
-											<input class="regular-text" type="text" id="client_ip" name="client_ip" value="">
+											<input class="regular-text" type="text" id="client_ip" name="client_ip" value="<?php echo $default_values['client_ip'] ?>">
 										</td>
 									</tr>	
 									<tr>
@@ -229,7 +231,7 @@ class WPISPConfig_Domain_Alias {
 											<label for="ns1"><?php _e( 'NameServer 1:', 'wpispconfig' ); ?></label>
 										</th>
 										<td>
-											<input class="regular-text" type="text" id="ns1" name="ns1" value="">
+											<input class="regular-text" type="text" id="ns1" name="ns1" value="<?php echo $default_values['ns1'] ?>">
 										</td>
 									</tr>
 									<tr>
@@ -237,7 +239,7 @@ class WPISPConfig_Domain_Alias {
 											<label for="ns2"><?php _e( 'NameServer 2:', 'wpispconfig' ); ?></label>
 										</th>
 										<td>
-											<input class="regular-text" type="text" id="ns2" name="ns2" value="">
+											<input class="regular-text" type="text" id="ns2" name="ns2" value="<?php echo $default_values['ns2'] ?>">
 										</td>
 									</tr>
 
@@ -246,7 +248,7 @@ class WPISPConfig_Domain_Alias {
 											<label for="ns2"><?php _e( 'Email:', 'wpispconfig' ); ?></label>
 										</th>
 										<td>
-											<input class="regular-text" type="text" id="email" name="email" value="">
+											<input class="regular-text" type="text" id="email" name="email" value="<?php echo $default_values['email'] ?>">
 										</td>
 									</tr>
 								</table>
@@ -295,6 +297,7 @@ class WPISPConfig_Domain_Alias {
 			$api = wpispconfig_get_current_api($options);
 			//$soap = new SoapIspconfig($options);
 			
+			
 			$new_aliasdomain = array( 
 								'domain' 			=>  $values['domain'], 
 								'parent_domain_id' 	=> $values['domain_id'],
@@ -334,20 +337,14 @@ class WPISPConfig_Domain_Alias {
 		if ( ! wp_verify_nonce($_POST['_wpnonce'], 'ispconfig_domain_alias_save' ) ) {
 		    wp_die(__( 'Security check', 'wpispconfig' )); 
 		}
-		
+		$notices_success = array();
 		try {
 
 			$created_values = self::create($_POST);
 
-			$notices_success = array();
-
 			$notices_success[] = '<strong>' . __( 'Aliasdomain ID:', 'wpispconfig' ) .'</strong> ' . $created_values['aliasdomain_id'] . '<br/>';
 			$notices_success[] = '<strong>' . __( 'DNS Zones added from DNS template:', 'wpispconfig' ) .'</strong> '. $created_values['template_id'] .'<br/>';
 
-			$sucess_notice = implode('', $notices_success);
-			WPISPConfig_notices::add( $sucess_notice );
-			wp_redirect($_POST['_wp_http_referer']);
-			die();
 
 		} catch (Exception $e) {
 			WPISPConfig_notices::add( array('text' => $e->getMessage(), 'error' => true) );
@@ -355,8 +352,21 @@ class WPISPConfig_Domain_Alias {
 			die();
 		}
 
-		WPISPConfig_notices::add(__( 'Created domain alias', 'wpispconfig' ));
+		// Trying refresh list of dashboard without intervention in the  process of  new website
+		try {
+			WPISPConfig_Dashboard::refresh_website_list();
+		} catch (Exception $e) {
+			WPISPConfig_notices::add( array('text' => $e->getMessage(), 'error' => true) );
+		}
+		
+		if (empty($notices_success)) {
+			WPISPConfig_notices::add(__( 'Created domain alias', 'wpispconfig' ));
+		} else {
+			$sucess_notice = implode('', $notices_success);
+			WPISPConfig_notices::add( $sucess_notice );
+		}
 		wp_redirect($_POST['_wp_http_referer']);
+		die();
 
 	}
 

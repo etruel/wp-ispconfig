@@ -293,6 +293,44 @@ function wpispconfig_default_options_sites_web_aliasdomain_add() {
     return $default_options;
 }
 
+function wpispconfig_default_options_dns_zone_add() {
+    $default_options = array(
+        'server_id'     => '1',
+        'origin'        => 'test.intt.',
+        'ns'            => 'one',
+        'mbox'          => 'zonemaster.test.tld.',
+        'serial'        =>  time(true).rand(1, 9999),
+        'refresh'       => '7200',
+        'retry'         => '540',
+        'expire'        => '604800',
+        'minimum'       => '3600',
+        'ttl'           => '3600',
+        'active'        => 'y',
+        'xfer'          => '',
+        'also_notify'   => '',
+        'update_acl'    => '',
+    );
+    $default_options = apply_filters('wpispconfig_default_options_dns_zone_add', $default_options);
+    return $default_options;
 
+}
+
+function wpispconfig_default_options_dns_alias_add() {
+    $default_options = array(
+        'server_id' => '1',
+        'zone'      => '1',
+        'name'      => 'alias',
+        'type'      => 'alias',
+        'data'      => 'hostmachine',
+        'aux'       => '0',
+        'ttl'       => '3600',
+        'active'    => 'y',
+        'stamp'     => 'CURRENT_TIMESTAMP',
+        'serial'    => '1',
+    );
+    $default_options = apply_filters('wpispconfig_default_options_dns_alias_add', $default_options);
+    return $default_options;
+
+}
 
 ?>

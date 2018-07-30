@@ -254,5 +254,39 @@ class RestApiISPConfig {
         return $this->request('sites_web_aliasdomain_add', $params_api);        
     }
 
+    public function dns_zone_get_id($primary_id) {
+         $params_api = array(
+            'session_id'    => $this->session_id,
+            'origin'     => $primary_id,
+        );
+        return $this->request('dns_zone_get_id', $params_api);             
+    }
+
+     public function dns_zone_add($client_id, $options = array()) {
+    
+        $default_options = wpispconfig_default_options_dns_zone_add();
+         
+        $new_options = wp_parse_args($options, $default_options);
+        $params_api = array(
+            'session_id'    => $this->session_id,
+            'client_id'     => $client_id,
+            'params'        => $new_options,
+        );
+        return $this->request('dns_zone_add', $params_api);        
+    }
+
+    public function dns_alias_add($client_id, $options = array()) {
+       
+       $default_options = wpispconfig_default_options_dns_alias_add();
+         
+        $new_options = wp_parse_args($options, $default_options);
+        $params_api = array(
+            'session_id'    => $this->session_id,
+            'client_id'     => $client_id,
+            'params'        => $new_options,
+        );
+        return $this->request('dns_alias_add', $params_api); 
+    }
+
 }
 ?>

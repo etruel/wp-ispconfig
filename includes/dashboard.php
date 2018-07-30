@@ -25,18 +25,85 @@ class WPISPConfig_Dashboard {
 		if ( is_admin() ){ // admin actions
 			add_action('admin_menu', array(__CLASS__, 'settings_menu') );
 		}
+		add_action( 'admin_post_ispconfig_refresh_list', array(__CLASS__, 'post_refresh_list'));
 		
 	}
 
-
+	/**
+	* Static function add_styles
+	* @access public
+	* @return void
+	* @since 1.0.0
+	*/
 	public static function add_styles() {
 		
 	}
+	/**
+	* Static function add_scripts
+	* @access public
+	* @return void
+	* @since 1.0.0
+	*/
 	public static function add_scripts() {
 		
 	}
-	
+	/**
+	* Static function post_refresh_list
+	* @access public
+	* @return void
+	* @since 1.0.0
+	*/
+	public static function post_refresh_list() {
+		$nonce = '';
+		if (!empty($_REQUEST['nonce'])) {
+			$nonce = $_REQUEST['nonce'];
+		}
+		if ( !wp_verify_nonce( $nonce, 'wpispc_refresh_list' ) ) {
+			wp_die(__( 'Security check', 'wpispconfig' )); 
+		}
+		try {
+			self::refresh_website_list();
+		} catch (Exception $e) {
+			WPISPConfig_notices::add( array('text' => $e->getMessage(), 'error' => true) );
+		}
+		WPISPConfig_notices::add(__( 'The list of websites has been updated.', 'wpispconfig' ));
+		wp_redirect(admin_url('admin.php?page=ispconfig_dashboard'));
+		die();
+	}
+	/**
+	* Static function refresh_website_list
+	* Refresh the list of websites in the dashboard page. 
+	* @access public
+	* @return $results Array with data of the websites.
+	* @since 1.0.0
+	*/
+	public static function refresh_website_list() {
 
+		$results = array();
+		$options = WPISPConfig_Settings::get_option(); 
+		try {
+			$api = wpispconfig_get_current_api($options);
+			$clients = $api->client_get_all();
+			foreach ($clients as $key => $client_id) {
+				$sys_groupid = $api->client_get_groupid($client_id);
+				$new_websites = $api->sites_web_domain_get(array('sys_groupid' => $sys_groupid ));
+				$results = array_merge($new_websites, $results);
+			}
+			set_transient( 'wpispconfig_websites_dashboard', $results, 6 * HOUR_IN_SECONDS  );
+		} catch (Exception $e) {
+			throw new Exception($e->getMessage(), 1);
+		}
+
+		return $results;
+	}
+	
+	/**
+	* Static function settings_menu
+	* Add menus and hooks to the dashboard page.
+	* @access public
+	* @return void
+	* @since 1.0.0
+	*/
 	public static function settings_menu() {
 		$page = add_menu_page( 
 	        __( 'WP-ISPConfig', 'wpispconfig' ),
@@ -53,7 +120,13 @@ class WPISPConfig_Dashboard {
 
 	}
 
-	
+	/**
+	* Static function page
+	* This function takes care in print the HTML of the dashboard page.
+	* @access public
+	* @return void
+	* @since 1.0.0
+	*/
 	public static function page() {
 		global $wp_settings_sections;
         if(!current_user_can('manage_options')) {
@@ -81,7 +154,7 @@ class WPISPConfig_Dashboard {
 							<div class="inside">
 								<p><b>WP-ISPConfig</b> <?php echo WPISPCONFIG_VERSION; ?> Version</p>
 								<p></p>
-								<p style="text-align: right;"></p>								
+								<a class="button" href="<?php echo admin_url('admin-post.php?action=ispconfig_refresh_list&nonce='. wp_create_nonce('wpispc_refresh_list')); ?>">Refresh List</a>								
 							</div>
 						</div>
 
@@ -100,21 +173,21 @@ class WPISPConfig_Dashboard {
 							<div class="inside">
 
 								<?php
-									$results = array();
-									$options = WPISPConfig_Settings::get_option(); 
+									$results = get_transient('wpispconfig_websites_dashboard');
+									if ($results === false ) {
 										try {
-											$api = wpispconfig_get_current_api($options);
-											$clients = $api->client_get_all();
-											foreach ($clients as $key => $client_id) {
-												$sys_groupid = $api->client_get_groupid($client_id);
-												$new_websites = $api->sites_web_domain_get(array('sys_groupid' => $sys_groupid ));
-												$results = array_merge($new_websites, $results);
-												
-											}
+											$results = self::refresh_website_list();
 										} catch (Exception $e) {
 											echo '<div class="notice notice-error">' . sprintf(__('Failed to connect with ISPConfig API. Please check your <a href="%s">Settings</a> and test the connection:', 'wpispconfig'), admin_url('admin.php?page=ispconfig_settings'))  . '<strong> ' . $e->getMessage() . '</strong></div>';
 										}
-									?>
+
+									} else {
+										if (!is_array($results)) {
+											$results = array();
+										} 
+									}
+									
+								?>
 								<table class="wp-list-table widefat fixed striped posts">
 									<?php 
 										if (!empty($results)) {
@@ -126,7 +199,6 @@ class WPISPConfig_Dashboard {
 										}
 
 									?>
-									
 
 								</table>
 								<p></p>

@@ -497,7 +497,9 @@ class WPISPConfig_New_Website {
 		if ( ! wp_verify_nonce($_POST['_wpnonce'], 'ispconfig_allinone_save' ) ) {
 		    wp_die(__( 'Security check', 'wpispconfig' )); 
 		}
-		
+
+		$notices_success = array();
+
 		try {
 
 			$create = array();
@@ -506,7 +508,7 @@ class WPISPConfig_New_Website {
 			}
 			$created_values = self::create($_POST, $create);
 
-			$notices_success = array();
+			
 
 			$notices_success[] = '<strong>' . __( 'Client ID:', 'wpispconfig' ) .'</strong> ' . $created_values['client_id'] . '<br/>';
 			$notices_success[] = '<strong>' . __( 'Username:', 'wpispconfig' ) .'</strong> '. $created_values['username'] .'<br/>';
@@ -545,21 +547,30 @@ class WPISPConfig_New_Website {
 			}
 			$notices_success = apply_filters('wpispconfig_all_in_one_success_notices', $notices_success, $created_values);
 
-			$sucess_notice = implode('', $notices_success);
-			WPISPConfig_notices::add( $sucess_notice );
-
-			wp_redirect($_POST['_wp_http_referer']);
-			die();
-
+		
 		} catch (Exception $e) {
+
 			WPISPConfig_notices::add( array('text' => $e->getMessage(), 'error' => true) );
 			wp_redirect($_POST['_wp_http_referer']);
 			die();
+
 		}
 
-		WPISPConfig_notices::add(__( 'Created all in one', 'wpispconfig' ));
-		wp_redirect($_POST['_wp_http_referer']);
+		// Trying refresh list of dashboard without intervention in the  process of  new website
+		try {
+			WPISPConfig_Dashboard::refresh_website_list();
+		} catch (Exception $e) {
+			WPISPConfig_notices::add( array('text' => $e->getMessage(), 'error' => true) );
+		}
 
+		if (empty($notices_success)) {
+			WPISPConfig_notices::add(__( 'Created all in one', 'wpispconfig' ));
+		} else {
+			$sucess_notice = implode('', $notices_success);
+			WPISPConfig_notices::add( $sucess_notice );
+		}
+		wp_redirect($_POST['_wp_http_referer']);
+		
 	}
 
 }

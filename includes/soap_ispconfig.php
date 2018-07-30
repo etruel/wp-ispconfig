@@ -166,5 +166,25 @@ class SoapIspconfig {
         return $this->soap->sites_web_aliasdomain_add($this->session_id, $client_id, $new_options);
     }
 
+    public function dns_zone_get_id($primary_id) {
+        return $this->soap->dns_zone_get_id($this->session_id, $primary_id);        
+    }
+
+    public function dns_zone_add($client_id, $options = array()) {
+       
+        $default_options = wpispconfig_default_options_dns_zone_add();
+         
+        $new_options = wp_parse_args($options, $default_options);        
+        return $this->soap->dns_zone_add($this->session_id, $client_id, $new_options);
+    }
+
+    public function dns_alias_add($client_id, $options = array()) {
+       
+        $default_options = wpispconfig_default_options_dns_alias_add();
+         
+        $new_options = wp_parse_args($options, $default_options);        
+        return $this->soap->dns_alias_add($this->session_id, $client_id, $new_options);
+    }
+
 }
 ?>
