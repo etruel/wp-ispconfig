@@ -24,8 +24,8 @@ class WPISPConfig_Domain_Alias {
 	public static function menu() {
 		
 	     $page = add_submenu_page( 
-	    	'ispconfig_dashboard', 
-	    	'Domain Alias', 
+	    	'ispconfig_dashboard',  
+	    	__('Domain Alias', 'wpispconfig' ),
 	    	'<img src="' . WPISPCONFIG_PLUGIN_URL .'assets/images/pror.png'.'" style="margin: 0pt 2px -2px 0pt;"><span>' . 'Domain Alias',
     		'manage_options', 
     		'wpispconfig_domain_alias',

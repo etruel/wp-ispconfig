@@ -24,13 +24,14 @@ class WPISPConfig_New_Website {
 		add_action('wpispconfig_all_in_one_before_table', array(__CLASS__, 'form_inputs_before'), 10, 1);
 		add_filter('wpispconfig_all_in_one_success_notices', array(__CLASS__, 'notices_success'), 10, 2);
 		add_filter('wpispconfig_values_all_in_one_before_create', array(__CLASS__, 'before_create'), 10, 3);
+		add_action('wp_ajax_wpispconfig_select_client', array(__CLASS__, 'ajax_select_client'));
 	}
 
 	public static function menu() {
 		
 	    $page = add_submenu_page( 
 	    	'ispconfig_dashboard', 
-	    	'New Website', 
+	    	__('New Website', 'wpispconfig' ),
 	    	'<img src="' . WPISPCONFIG_PLUGIN_URL .'assets/images/pror.png'.'" style="margin: 0pt 2px -2px 0pt;"><span>' . 'New Website',
     		'manage_options', 
     		'wpispconfig_new_website',
@@ -46,9 +47,52 @@ class WPISPConfig_New_Website {
 	}
 	public static function add_scripts() {
 		wp_enqueue_script( 'wpcispconfig-new-website', WPISPCONFIG_PLUGIN_URL . 'assets/js/new-website.js', array( 'jquery' ), WPISPCONFIG_VERSION, true );
+		wp_localize_script('wpcispconfig-new-website', 'wpcispconfig_new_website',
+				array(
+						'ajax_url' => admin_url( 'admin-ajax.php' ),
+						'select_client_nonce'	=> wp_create_nonce('new_website_nonce'),
+						'txt_loading' => __('Loading...', 'wpispconfig' ),
+					)
+				);
 		do_action('wpispconfig_all_in_one_add_scripts');
 	}
+	public static function ajax_select_client() {
+		$nonce = '';
+		if (isset($_REQUEST['nonce'])) {
+			$nonce = $_REQUEST['nonce'];
+		}
+		if(!wp_verify_nonce($nonce, 'new_website_nonce') ) {
+			die('Security check'); 
+		} 
+		$api = null;
+			$options = WPISPConfig_Settings::get_option(); 
+		try {
+			$soap = wpispconfig_get_current_api($options);
 
+		} catch (Exception $e) {
+			echo '<div class="notice notice-error">' . sprintf(__('Failed to connect with ISPConfig API. Please check your <a href="%s">Settings</a> and test the connection:', 'wpispconfig'), admin_url('admin.php?page=ispconfig_settings'))  . '<strong> ' . $e->getMessage() . '</strong></div>';
+		}
+		$clients = array();
+		$client_data = array();
+		if (!empty($soap)) {
+			try {
+				$clients = $soap->client_get_all();
+				foreach ($clients as $key => $client_id) {
+					$client_data[] = $soap->client_get($client_id);
+				}
+			} catch (Exception $e) {
+				echo '<div class="notice notice-error">' .$e->getMessage() . '</div>';
+			}
+
+		}
+		echo '<select id="client_id" name="client_id">';
+		echo '<option value="-1">' . __( 'Select Client', 'wpispconfig' ). '</option>';			
+		foreach ($client_data as $key => $values) {
+			echo '<option value="' . $values['client_id'] . '">' . $values['client_id'] . ' | ' . $values['contact_name'] . ' | ' . $values['company_name'] . '</option>';
+		}
+		echo '</select>';
+		die();
+	}
 	public static function page() {
 		if(!current_user_can('manage_options')) {
             wp_die(__('You do not have sufficient permissions to access this page.'));
@@ -275,19 +319,7 @@ class WPISPConfig_New_Website {
         <?php
 	}
 	public static function form_inputs_before($soap) { 
-		$clients = array();
-		$client_data = array();
-		if (!empty($soap)) {
-			try {
-				$clients = $soap->client_get_all();
-				foreach ($clients as $key => $client_id) {
-					$client_data[] = $soap->client_get($client_id);
-				}
-			} catch (Exception $e) {
-				echo '<div class="notice notice-error">' .$e->getMessage() . '</div>';
-			}
-
-		}
+		
 		
 		?>
 		<table class="form-table">
@@ -303,14 +335,8 @@ class WPISPConfig_New_Website {
 				<th scope="row">
 					<label for="exist_client"><?php _e( 'Select Client:', 'wpispconfig' ); ?></label>
 				</th>
-				<td>
-					<select id="client_id" name="client_id">
-					<?php 
-						foreach ($client_data as $key => $values) {
-							echo '<option value="' . $values['client_id'] . '">' . $values['client_id'] . ' | ' . $values['contact_name'] . ' | ' . $values['company_name'] . '</option>';
-						}
-					?>
-					</select>
+				<td id="td_select_client">
+					
 					
 				</td>
 			</tr>
