@@ -2,16 +2,16 @@
 Contributors: etruel
 Donate link: esteban@netmdp.com
 Tags:  host, ISPConfig, hosting, remote, manager, admin, panel, control, wordpress, post, plugin, interfase, server
-Requires at least: 3.1
+Requires at least: 4.1
 Tested up to: 4.4
 Stable tag: trunk
 License: GPLv2
 
-WordPress interface for ISPConfig ~ Hosting Control Panel.  The plugin allows you to add a new client with all needed steps with just one click.
+The first and original WordPress interface for ISPConfig ~ Hosting Control Panel.  The plugin allows you to add a new client with all needed steps with just one click.
 
 == Description == 
 
-The WordPress interface for [ISPConfig](http://www.ispconfig.org) – Hosting Control Panel. An excelent Open Source, transparent, free Server Manager.
+The first and original WordPress interface for [ISPConfig](http://www.ispconfig.org) – Hosting Control Panel. An excelent Open Source, transparent, free Server Manager.
 
 As a remote user, with WP-ISPConfig plugin you can manage new account and client setup features of your ISPConfig 3 – Hosting Control Panel.
 
@@ -63,7 +63,9 @@ You should have received a copy of the GNU General Public License along with WP 
 == Screenshots ==
 
 1. Screen: adding an entire website just with minimal data.
-2. After add the all-in-one client, the plugin shows you the operations results.
+2. Settings page to connect to the remote server with Soap or REST API ISPConfig.
+3. The default values to use in the fields when create websites.
+4. The Dashboard of the plugin shows a summary of the websites in the hosting.
 
 == Frequently Asked Questions ==
 
@@ -83,17 +85,21 @@ You should have received a copy of the GNU General Public License along with WP 
 * Come to website of the plugin [etruel.com](http://etruel.com/contact-us/) and ask there.  I will contact you. Promise.
 
 == Changelog ==
-= NUEVA VERSION =
-* AHORA USA EL STANDAR PARA SETTINGS DE WORDPRESS con register_setting, add_settings_section, add_settings_field
-* SE AGREGO UN TESTER DE CONEXION CON UN SOLO CLICK A UN BOTON.
-* SE AGREGO NONCE A TODAS LAS GUARDADO DE DATOS.
-* SE USA EL ADMIN POST HOOK PARA ENVIAR LOS POSTS DATA.
-* SE AGREGO EL SELECT DE SERVIDOR.
-* SE AGREGO PARA USAR LA REST API DEL ISPCONFIG.
-* SE AGREGO EL DASHBAORD PAGE.
-* SE AGREGO EL SETTING DEFAULT VALUES EN UN TAB DEL SETTING.
-* SE AGREGARON FILTROS PARA FILTRAR TODOS LOS PARAMETROS DE LA API DEL ISPCONFIG.
-
+= 3.0 Sep 20, 2018 =
+* Major version released! Test it before use in a production environment.
+* Up to version number 3 to be equal with the ISPConfig major version. ;-)
+* NEW: Added options to add a new full website to existent clients.
+* NEW: Added options to choose what must be created with the website creation: FTP, DB User, DNS, Email.
+* NEW: Added options to add domain alias for existent websites of clients.
+* Added a remote conection tester with just a click.
+* Added optional use of the SOAP or the new improved REST API of ISPConfig.
+* Added Server select when necessary.
+* Added a Dashboard Page of the plugin (needs improvements but it's a good start ;)
+* Added a section in a Settings Tab to fill in the Default Values you use in most of the cases.
+* Added custom Wordpress filters for all the parameters sent by the ISPConfig API.
+* Improves security nonces in all around.
+* Improves the use of admin post hook to send all POST data.
+* Improves all Settings with the WordPress standard methods: register_setting, add_settings_section, add_settings_field, etc.
 
 = 1.0.3 =
 * Fixes a bug that breaks settings page in some cases.
@@ -113,5 +119,5 @@ You should have received a copy of the GNU General Public License along with WP 
 
 == Upgrade Notice ==
 
-= 1.0.3 =
-* Some fixes
+= 3.0 =
+* Major version! Test it before use in a production environment.
