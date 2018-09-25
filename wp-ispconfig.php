@@ -2,7 +2,7 @@
 /**
 * Plugin Name: WP-ISPConfig
 * Description: This plugin allow manage some features of ISPConfig with remote user.
-* Version: 3.0
+* Version: 3.0.1
 * Author: Esteban Truelsegaard <esteban@netmdp.com>
 * Author URI: https://etruel.com/
 * Text Domain: wpispconfig
@@ -20,7 +20,7 @@ if ( !defined('ABSPATH') ) {
 
 // Plugin version
 if (!defined('WPISPCONFIG_VERSION')) {
-	define('WPISPCONFIG_VERSION', '3.0' ); 
+	define('WPISPCONFIG_VERSION', '3.0.1' ); 
 } 
 
 
