@@ -18,7 +18,7 @@ class WPISPConfig_Domain_Alias {
 			add_action('admin_menu', array(__CLASS__, 'menu'), 15 );
 		}
 
-		add_action( 'wp_ajax_cmb_domain',  array(__CLASS__, 'cmb_domain'));
+		add_action( 'wp_ajax_wpispconfig_cmb_domain',  array(__CLASS__, 'cmb_domain'));
 		add_action( 'admin_post_ispconfig_domain_alias_save', array(__CLASS__, 'save'));
 	}
 	public static function menu() {
@@ -40,10 +40,11 @@ class WPISPConfig_Domain_Alias {
 	}
 	public static function add_scripts() {
 		wp_enqueue_script( 'wpispconfig-domain-alias', WPISPCONFIG_PLUGIN_URL . 'assets/js/domain-alias.js', array('jquery'), WPISPCONFIG_VERSION, true);
-		wp_localize_script( 'wpispconfig-domain-alias', 'myAjax', 
+		wp_localize_script( 'wpispconfig-domain-alias', 'js_wpconfig_domain_alias', 
 							array( 
 									'ajaxurl' => admin_url('admin-ajax.php'), 
-									'nonce' => wp_create_nonce('wpispc_nonce') 
+									'nonce' => wp_create_nonce('wpispc_nonce'),
+									'txt_loading' => __('Loading...', 'wpispconfig' ),
 							)
 						);
 	}
@@ -162,7 +163,7 @@ class WPISPConfig_Domain_Alias {
 										<th scope="row">
 											<label for="domain_id"><?php _e( 'Domain:', 'wpispconfig' ); ?></label>
 										</th>
-										<td>
+										<td id="domain_id_td">
 											<select id="domain_id" name="domain_id">
 												<option value="0"><?php _e( 'Select a client', 'wpispconfig' ); ?></option>
 											</select>
