@@ -2,8 +2,8 @@
 Contributors: etruel
 Donate link: esteban@netmdp.com
 Tags:  host, ISPConfig, hosting, remote, manager, admin, panel, control, wordpress, post, plugin, interfase, server
-Requires at least: 3.1
-Tested up to: 4.4
+Requires at least: 4.1
+Tested up to: 5.0
 Stable tag: trunk
 License: GPLv2
 
@@ -11,11 +11,11 @@ WordPress interface for ISPConfig ~ Hosting Control Panel.  The plugin allows yo
 
 == Description == 
 
-The WordPress interface for [ISPConfig](http://www.ispconfig.org) – Hosting Control Panel. An excelent Open Source, transparent, free Server Manager.
+The first WordPress interface for [ISPConfig](http://www.ispconfig.org) – Hosting Control Panel. An excelent Open Source, transparent, free Server Manager.
 
 As a remote user, with WP-ISPConfig plugin you can manage new account and client setup features of your ISPConfig 3 – Hosting Control Panel.
 
-With WP-ISPConfig you can have WordPress installed on the same host, or in a remote host, and add what every new client needs all-in-one click. 
+With WP-ISPConfig you can have a WordPress installed in the same host, or in a remote host, and add what each new client needs all-in-one click. 
 
 This means the Client, DNS, Domain (website), FTP user, email Domain and mailbox, all just with minimal input and no complicated setup. 
 
@@ -25,7 +25,7 @@ All you have to do is just activate and type in a few lines of settings.
 
 If you like it, please take a minute to [Rate 5 Stars](https://wordpress.org/support/view/plugin-reviews/wp-ispconfig?rate=5#postform) on Wordpress. Thanks! :-)
 
-Some very useful Add-ons are on the way. You can sponsor one to speed the releases.  If you need some new feature ask for it on http://etruel.com/contact-us/
+Some very useful Add-ons are on the way. You can sponsor one to speed the releases.  If you need some new feature ask for it on http://etruel.com/support/
 
 Author page in spanish:[NetMdP](http://www.netmdp.com). 
 Plugin and Add-ons page:[etruel.com](http://etruel.com).
@@ -85,6 +85,9 @@ You should have received a copy of the GNU General Public License along with WP 
 * Come to website of the plugin [etruel.com](http://etruel.com/contact-us/) and ask there.  I will contact you. Promise.
 
 == Changelog ==
+= 3.0.1 Sep 27, 2018 =
+* Added a "loading" notice on ajax options in the select of client websites on domain alias screen.
+
 = 3.0 Sep 20, 2018 =
 * Major version released! Test it before use in a production environment.
 * Up to version number 3 to be equal with the ISPConfig major version. ;-)
