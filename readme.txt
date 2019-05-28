@@ -2,8 +2,8 @@
 Contributors: etruel
 Donate link: esteban@netmdp.com
 Tags:  host, ISPConfig, hosting, remote, manager, admin, panel, control, wordpress, post, plugin, interfase, server
-Requires at least: 4.1
-Tested up to: 5.0
+Requires at least: 4.9
+Tested up to: 5.2.1
 Stable tag: trunk
 License: GPLv2
 
@@ -85,6 +85,12 @@ You should have received a copy of the GNU General Public License along with WP 
 * Come to website of the plugin [etruel.com](http://etruel.com/contact-us/) and ask there.  I will contact you. Promise.
 
 == Changelog ==
+= 3.1 May 28, 2019 =
+* Added Demo Mode to New Website to see what would be create.
+* Added FTP and DB User to New Website for existing clients.
+* Fixes user mail and maildir on created domains for existing clients.
+* Fixes do not create email domain if Email checkbox is not selected.
+
 = 3.0.1 Sep 27, 2018 =
 * Added a "loading" notice on ajax options in the select of client websites on domain alias screen.
 
