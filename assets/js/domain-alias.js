@@ -1,5 +1,4 @@
-jQuery(document).ready(function($) {
-
+jQuery(document).ready(function ($) {
 	$('#client_id').change(function(e){
 		$('#email').val($(this).find(':selected').data('email'));
 		e.preventDefault();
