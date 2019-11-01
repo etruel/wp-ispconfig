@@ -49,6 +49,8 @@ class RestApiISPConfig {
 
 		$res = json_decode($response['body'], true);
 
+        
+        
 		if(isset($res['code'])) {
 			if($res['code'] != 'ok') {
 				$error_message = (!empty($res['message']) ? $res['message'] : 'An error has been ocurred!');
@@ -132,6 +134,7 @@ class RestApiISPConfig {
 			'session_id' => $this->session_id,
 		);
 		$params_api	 = wp_parse_args($params_api, $new_options);
+       
 		return $this->request('dns_templatezone_add', $params_api);
 	}
 

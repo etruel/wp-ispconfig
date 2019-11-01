@@ -10,7 +10,8 @@ if(!defined('ABSPATH')) {
 	header('HTTP/1.1 403 Forbidden');
 	exit();
 }
-
+/* We need add xfer to the default template for work.
+*/
 if(!class_exists('WPISPConfig_New_Website')) :
 
 	class WPISPConfig_New_Website {
@@ -377,6 +378,26 @@ if(!class_exists('WPISPConfig_New_Website')) :
 		}
 
 		public static function before_create($values, $input_values, $soap) {
+
+			$demomode	 = (!empty($input_values['demomode']) ? $input_values['demomode'] : false );
+			/* create client */
+			if(empty($input_values['exist_client'])) {
+				$new_client = array(
+					'company_name'	 => $values['company_name'],
+					'contact_name'	 => $values['client_name'],
+					'email'			 => $values['email'],
+					'username'		 => $values['username'],
+					'password'		 => $values['password'],
+				);
+				if(!$demomode) {
+					$values['client_id'] = $soap->add_client($new_client);
+					$input_values['exist_client'] = true;
+					$input_values['client_id'] = $values['client_id'];
+				}
+			}
+
+
+
 			if(!empty($input_values['exist_client'])) {
 				if(!empty($input_values['client_id'])) {
 					$client_id = intval($input_values['client_id']);
@@ -387,10 +408,13 @@ if(!class_exists('WPISPConfig_New_Website')) :
 						$values['company_name']		 = self::$current_client_data['company_name'];
 						$values['email']			 = self::$current_client_data['email'];
 						$values['emailuser']		 = self::$current_client_data['username'];
-						$values['ftpdb_user']		 = (!empty($input_values['ftpdb_user']) ? $input_values['ftpdb_user'] : $values['emailuser']);
 						$values['username']			 = self::$current_client_data['username'] . wp_generate_password(3, false, false);
+
+						$values['ftpdb_user']		 = (!empty($input_values['ftpdb_user']) ? $input_values['ftpdb_user'] : self::$current_client_data['username'] . wp_generate_password(3, false, false) );
+						
 						//$values['ftpdb_user']							=	$values['ftpdb_user'];
 						//$values['dns_email']							=	str_replace('@',	'.',	$values['email']);
+						
 					}catch (Exception $e) {
 						throw new Exception("Client does not exist with ID:" . $client_id, 1);
 					}
@@ -419,6 +443,9 @@ if(!class_exists('WPISPConfig_New_Website')) :
 			$values['ns2']			 = (!empty($array_values['ns2']) ? $array_values['ns2'] : '');
 			$values['dns_email']	 = str_replace('@', '.', $array_values['email']);
 
+
+			//$values['ftpdb_user'] =  $values['username'] . $values['server_id'] . ;
+
 			$creating['ftp']	 = (!empty($creating['ftp']) ? $creating['ftp'] : false);
 			$creating['db']		 = (!empty($creating['db']) ? $creating['db'] : false);
 			$creating['dns']	 = (!empty($creating['dns']) ? $creating['dns'] : false);
@@ -430,20 +457,7 @@ if(!class_exists('WPISPConfig_New_Website')) :
 
 				$api	 = wpispconfig_get_current_api($options);
 				$values	 = apply_filters('wpispconfig_values_all_in_one_before_create', $values, $array_values, $api, $creating);
-
-				/* create client */
-				if(empty($values['client_id'])) {
-					$new_client = array(
-						'company_name'	 => $values['company_name'],
-						'contact_name'	 => $values['client_name'],
-						'email'			 => $values['email'],
-						'username'		 => $values['username'],
-						'password'		 => $values['password'],
-					);
-					if(!$demomode) {
-						$values['client_id'] = $api->add_client($new_client);
-					}
-				}
+				
 
 				$dns_zone = -1;
 				if($creating['dns']) {
