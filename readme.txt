@@ -3,7 +3,7 @@ Contributors: etruel
 Donate link: esteban@netmdp.com
 Tags:  host, ISPConfig, hosting, remote, manager, admin, panel, control, wordpress, post, plugin, interfase, server
 Requires at least: 4.9
-Tested up to: 5.2.1
+Tested up to: 5.3
 Stable tag: trunk
 License: GPLv2
 
@@ -11,7 +11,7 @@ WordPress interface for ISPConfig ~ Hosting Control Panel.  The plugin allows yo
 
 == Description == 
 
-The first WordPress interface for [ISPConfig](http://www.ispconfig.org) – Hosting Control Panel. An excelent Open Source, transparent, free Server Manager.
+The [first](https://www.howtoforge.com/community/threads/wordpress-plugin-to-create-a-complete-new-client-in-one-step.63285/) WordPress interface for [ISPConfig](http://www.ispconfig.org) – Hosting Control Panel. An excelent Open Source, transparent, free Server Manager.
 
 As a remote user, with WP-ISPConfig plugin you can manage new account and client setup features of your ISPConfig 3 – Hosting Control Panel.
 
@@ -27,8 +27,8 @@ If you like it, please take a minute to [Rate 5 Stars](https://wordpress.org/sup
 
 Some very useful Add-ons are on the way. You can sponsor one to speed the releases.  If you need some new feature ask for it on http://etruel.com/support/
 
-Author page in spanish:[NetMdP](http://www.netmdp.com). 
-Plugin and Add-ons page:[etruel.com](http://etruel.com).
+Author page in spanish:[NetMdP](https://www.netmdp.com).
+Plugin and Add-ons page:[etruel.com](https://etruel.com).
 
 == Installation ==
 
@@ -85,9 +85,10 @@ You should have received a copy of the GNU General Public License along with WP 
 * Come to website of the plugin [etruel.com](http://etruel.com/contact-us/) and ask there.  I will contact you. Promise.
 
 == Changelog ==
-= 3.1 May 28, 2019 =
+= 3.1 Nov 1, 2019 =
 * Added Demo Mode to New Website to see what would be create.
 * Added FTP and DB User to New Website for existing clients.
+* DNS zones are not added if xfer=0 is not found in DNS template content.
 * Fixes user mail and maildir on created domains for existing clients.
 * Fixes do not create email domain if Email checkbox is not selected.
 
@@ -128,5 +129,5 @@ You should have received a copy of the GNU General Public License along with WP 
 
 == Upgrade Notice ==
 
-= 3.0 =
-* Major version released! Test it before use in a production environment.
+= 3.1 =
+* Fixes some important issues and add new demo mode! Test it before use in a production environment.
