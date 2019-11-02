@@ -98,18 +98,15 @@ class RestApiISPConfig {
 		return $ret;
 	}
     public function server_get_php_versions($server_id, $php) {
-        $ret = array();
-        if(in_array('server_get_php_versions', $this->get_function_list())) {
+       
+        $params_api = array(
+            'session_id' => $this->session_id,
+            'server_id' => $server_id,
+            'php' => $php,
+        );
 
-            $params_api = array(
-                'session_id' => $this->session_id,
-                'server_id' => $server_id,
-                'php' => $php,
-            );
-
-            return $this->request('server_get_php_versions', $params_api);
-        }
-        return $ret;
+        return $this->request('server_get_php_versions', $params_api);
+       
     }
 	public function add_client($options = array(), $reseller_id = 0) {
 

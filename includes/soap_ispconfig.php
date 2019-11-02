@@ -63,10 +63,9 @@ class SoapIspconfig {
 	}
 
 	public function server_get_php_versions($server_id, $php) {
-		$ret = array();
-		if(in_array('server_get_php_versions', $this->get_function_list())) {
-			$ret = $this->soap->server_get_php_versions($this->session_id, $server_id, $php);
-		}
+		
+		$ret = $this->soap->server_get_php_versions($this->session_id, $server_id, $php);
+
 		return $ret;
 	}
 

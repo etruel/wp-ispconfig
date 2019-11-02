@@ -550,7 +550,7 @@ if(!class_exists('WPISPConfig_New_Website')) :
 				$api	 = wpispconfig_get_current_api($options);
 				$values	 = apply_filters('wpispconfig_values_all_in_one_before_create', $values, $array_values, $api, $creating);
 				
-
+				// xfer=0 must be in DNS template to work well
 				$dns_zone = -1;
 				if($creating['dns']) {
 					$new_dns_templatezone = array(
