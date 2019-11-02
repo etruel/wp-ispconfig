@@ -104,6 +104,7 @@ if(!class_exists('WPISPConfig_New_Website')) :
 			$default_values	 = WPISPConfig_DefaultValues::get_option();
 			$template_dns	 = array();
 			$servers		 = array();
+			$php_types 	 = array('no' => __('Disabled', 'wpispconfig'), 'fast-cgi' => 'Fast-CGI', 'cgi' => 'CGI', 'mod' => 'Mod-PHP', 'suphp' => 'SuPHP', 'php-fpm' => 'PHP-FPM', 'hhvm' => 'HHVM');
 			?>
 
 			<div class="wrap">
@@ -113,6 +114,8 @@ if(!class_exists('WPISPConfig_New_Website')) :
 					<?php
 					wp_nonce_field('ispconfig_allinone_save');
 					?>
+
+
 					<div id="poststuff">
 						<div id="post-body" class="metabox-holder columns-2">
 							<div id="postbox-container-1" class="postbox-container">
@@ -180,13 +183,54 @@ if(!class_exists('WPISPConfig_New_Website')) :
 											//print_r($soap->server_get_all());
 											$template_dns	 = $api->dns_templatezone_get_all();
 											$servers		 = $api->server_get_all();
+											$selected_server = 0;
+											$php_versions = array();
+
+											foreach ($servers as $s_key => $server) {
+												if (empty($selected_server)) {
+													$selected_server = $server['server_id'];
+												}
+												if (empty($php_versions[$server['server_id']])) {
+													$php_versions[$server['server_id']] = array();
+												}
+
+												foreach($php_types as $key => $values) {
+												
+													if (empty($php_versions[$server['server_id']][$key])) {
+														$php_versions[$server['server_id']][$key] = array();
+													}
+
+													if ($key == 'no') {
+														$php_versions[$server['server_id']][$key][''] = '-';
+														continue;
+													}
+													$php_versions[$server['server_id']][$key][''] = 'Default';
+
+													$php_versions_servers = $api->server_get_php_versions($server['server_id'], $key);
+													if (!empty($php_versions_servers)) {
+														foreach ($php_versions_servers as $pvsk => $php_version_server) {
+															$php_versions[$server['server_id']][$key][$php_version_server] = $php_version_server;
+														}
+
+													}
+												}
+											}
+
+											
+
 										}catch (Exception $e) {
 											echo '<div class="notice notice-error">' . sprintf(__('Failed to connect with ISPConfig API. Please check your <a href="%s">Settings</a> and test the connection:', 'wpispconfig'), admin_url('admin.php?page=ispconfig_settings')) . '<strong> ' . $e->getMessage() . '</strong></div>';
 										}
 
 										do_action('wpispconfig_all_in_one_before_table', $api);
 										?>
+										<script type="text/javascript">
+											var ispc_selected_server = <?php echo $selected_server; ?>;
+											var ispc_selected_php = 'php-fpm';
+											var ispc_php_versions = <?php echo json_encode($php_versions); ?>;
 
+
+										</script>
 										<table class="form-table" id="client_table">
 											<tr>
 												<th scope="row">
@@ -240,7 +284,7 @@ if(!class_exists('WPISPConfig_New_Website')) :
 													<select id="server" name="server">
 														<?php
 														foreach($servers as $key => $values) {
-															echo '<option value="' . $values['server_id'] . '">' . $values['server_name'] . '</option>';
+															echo '<option value="' . $values['server_id'] . '" '. selected($selected_server, $values['server_id']).'>' . $values['server_name'] . '</option>';
 														}
 														?>	
 													</select>
@@ -276,6 +320,51 @@ if(!class_exists('WPISPConfig_New_Website')) :
 													<p id="new_domain_description" class="description"><?php _e('Fill in the field with the new website domain or subdomain.(*)', 'wpispconfig') ?></p>
 												</td>
 											</tr>
+											<tr>
+												<th scope="row">
+													<label for="php"><?php _e('PHP:', 'wpispconfig'); ?></label>
+												</th>
+												<td>
+													<select id="php" name="php">
+														<?php
+														foreach($php_types as $key => $values) {
+															echo '<option value="' . $key . '" '. selected($key, 'php-fpm' ) .' >' . $values . '</option>';
+														}
+														?>	
+													</select>
+												</td>
+											</tr>
+											<tr>
+												<th scope="row">
+													<label for="fastcgi_php_version"><?php _e('PHP Version:', 'wpispconfig');  ?></label>
+												</th>
+												<td>
+													<select id="fastcgi_php_version" name="fastcgi_php_version">
+														<?php
+														foreach($php_versions[$selected_server]['php-fpm'] as $key => $values) {
+															echo '<option value="' . $key . '" '. selected($key, '' ) .'>' . $values . '</option>';
+														}
+														?>	
+													</select>
+												</td>
+											</tr>
+											<tr>
+												<th scope="row">
+													<label for="ssl"><?php _e('SSL:', 'wpispconfig'); ?></label>
+												</th>
+												<td>
+													<input type="checkbox" id="ssl" name="ssl" value="y">
+												</td>
+											</tr>
+
+											<tr>
+												<th scope="row">
+													<label for="ssl_letsencrypt"><?php _e('Let\'s Encrypt SSL:', 'wpispconfig'); ?></label>
+												</th>
+												<td>
+													<input type="checkbox" id="ssl_letsencrypt" name="ssl_letsencrypt" value="y">
+												</td>
+											</tr>	
 
 											<tr>
 												<th scope="row">
@@ -376,7 +465,7 @@ if(!class_exists('WPISPConfig_New_Website')) :
 
 		public static function before_create($values, $input_values, $soap) {
 
-			$demomode = (!empty($input_values['demomode']) ? $input_values['demomode'] : false );
+			$demomode	 = (!empty($input_values['demomode']) ? $input_values['demomode'] : false );
 			/* create client */
 			if(empty($input_values['exist_client'])) {
 				$new_client = array(
@@ -387,9 +476,9 @@ if(!class_exists('WPISPConfig_New_Website')) :
 					'password'		 => $values['password'],
 				);
 				if(!$demomode) {
-					$values['client_id']			 = $soap->add_client($new_client);
-					$input_values['exist_client']	 = true;
-					$input_values['client_id']		 = $values['client_id'];
+					$values['client_id'] = $soap->add_client($new_client);
+					$input_values['exist_client'] = true;
+					$input_values['client_id'] = $values['client_id'];
 				}
 			}
 
@@ -407,10 +496,11 @@ if(!class_exists('WPISPConfig_New_Website')) :
 						$values['emailuser']		 = self::$current_client_data['username'];
 						$values['username']			 = self::$current_client_data['username'] . wp_generate_password(3, false, false);
 
-						$values['ftpdb_user'] = (!empty($input_values['ftpdb_user']) ? $input_values['ftpdb_user'] : self::$current_client_data['username'] . wp_generate_password(3, false, false) );
-
+						$values['ftpdb_user']		 = (!empty($input_values['ftpdb_user']) ? $input_values['ftpdb_user'] : self::$current_client_data['username'] . wp_generate_password(3, false, false) );
+						
 						//$values['ftpdb_user']							=	$values['ftpdb_user'];
 						//$values['dns_email']							=	str_replace('@',	'.',	$values['email']);
+						
 					}catch (Exception $e) {
 						throw new Exception("Client does not exist with ID:" . $client_id, 1);
 					}
@@ -425,19 +515,25 @@ if(!class_exists('WPISPConfig_New_Website')) :
 
 			$values = array();
 
-			$values['server_id']	 = (!empty($array_values['server']) ? $array_values['server'] : '1');
-			$values['client_name']	 = (!empty($array_values['client_name']) ? $array_values['client_name'] : '');
-			$values['company_name']	 = (!empty($array_values['company_name']) ? $array_values['company_name'] : '');
-			$values['email']		 = (!empty($array_values['email']) ? $array_values['email'] : '');
-			$values['username']		 = (!empty($array_values['username']) ? $array_values['username'] : '');
-			$values['password']		 = (!empty($array_values['password']) ? $array_values['password'] : '');
+			$values['server_id']			= (!empty($array_values['server']) ? $array_values['server'] : '1');
+			$values['client_name']	 		= (!empty($array_values['client_name']) ? $array_values['client_name'] : '');
+			$values['company_name']	 		= (!empty($array_values['company_name']) ? $array_values['company_name'] : '');
+			$values['email']		 		= (!empty($array_values['email']) ? $array_values['email'] : '');
+			$values['username']		 		= (!empty($array_values['username']) ? $array_values['username'] : '');
+			$values['password']		 		= (!empty($array_values['password']) ? $array_values['password'] : '');
 
-			$values['template_id']	 = (!empty($array_values['dns_template_id']) ? $array_values['dns_template_id'] : '');
-			$values['new_domain']	 = (!empty($array_values['new_domain']) ? $array_values['new_domain'] : '');
-			$values['client_ip']	 = (!empty($array_values['client_ip']) ? $array_values['client_ip'] : '');
-			$values['ns1']			 = (!empty($array_values['ns1']) ? $array_values['ns1'] : '');
-			$values['ns2']			 = (!empty($array_values['ns2']) ? $array_values['ns2'] : '');
-			$values['dns_email']	 = str_replace('@', '.', $array_values['email']);
+			$values['template_id']	 		= (!empty($array_values['dns_template_id']) ? $array_values['dns_template_id'] : '');
+			$values['new_domain']	 		= (!empty($array_values['new_domain']) ? $array_values['new_domain'] : '');
+			$values['php']	 		 		= (!empty($array_values['php']) ? $array_values['php'] : 'php-fpm');
+			$values['fastcgi_php_version']	= (!empty($array_values['fastcgi_php_version']) ? $array_values['fastcgi_php_version'] : '');
+			$values['ssl']					= (!empty($array_values['ssl']) ? $array_values['ssl'] : 'n');
+			$values['ssl_letsencrypt']		= (!empty($array_values['ssl_letsencrypt']) ? $array_values['ssl_letsencrypt'] : 'n');
+
+
+			$values['client_ip']	 		= (!empty($array_values['client_ip']) ? $array_values['client_ip'] : '');
+			$values['ns1']			 		= (!empty($array_values['ns1']) ? $array_values['ns1'] : '');
+			$values['ns2']			 		= (!empty($array_values['ns2']) ? $array_values['ns2'] : '');
+			$values['dns_email']			= str_replace('@', '.', $array_values['email']);
 
 
 			//$values['ftpdb_user'] =  $values['username'] . $values['server_id'] . ;
@@ -453,8 +549,7 @@ if(!class_exists('WPISPConfig_New_Website')) :
 
 				$api	 = wpispconfig_get_current_api($options);
 				$values	 = apply_filters('wpispconfig_values_all_in_one_before_create', $values, $array_values, $api, $creating);
-
-				// xfer=0 must be in DNS template to work well 
+				
 
 				$dns_zone = -1;
 				if($creating['dns']) {
@@ -477,9 +572,14 @@ if(!class_exists('WPISPConfig_New_Website')) :
 				 */
 				$domain_id	 = -1;
 				$new_website = array(
-					'server_id'		 => $values['server_id'],
-					'domain'		 => $values['new_domain'],
-					'stats_password' => $values['password'],
+					'server_id'		 		=> $values['server_id'],
+					'domain'		 		=> $values['new_domain'],
+					'stats_password' 		=> $values['password'],
+					'php'			 		=> $values['php'],
+					'fastcgi_php_version' 	=> $values['fastcgi_php_version'],
+					'ssl'					=> $values['ssl'],
+					'ssl_letsencrypt'		=> $values['ssl_letsencrypt']
+
 				);
 				if(!$demomode) {
 					$domain_id = $api->add_website($values['client_id'], $new_website);
