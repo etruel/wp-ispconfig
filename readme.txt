@@ -85,7 +85,9 @@ You should have received a copy of the GNU General Public License along with WP 
 * Come to website of the plugin [etruel.com](http://etruel.com/contact-us/) and ask there.  I will contact you. Promise.
 
 == Changelog ==
-= 3.1 Nov 1, 2019 =
+= 3.1 Nov 2, 2019 =
+* Added PHP type and version selects to New Website form.
+* Added SSL and Let's Encrypt SSL certificate options to New Website form.
 * Added Demo Mode to New Website to see what would be create.
 * Added FTP and DB User to New Website for existing clients.
 * DNS zones are not added if xfer=0 is not found in DNS template content.
